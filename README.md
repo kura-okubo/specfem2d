@@ -1,5 +1,7 @@
 # SPECFEM2D
 
+### This folk is extended from original source (https://github.com/geodynamics/specfem2d.git) to couple specfem2D with other numerical framework to model the dynamic earthquake rupture. The acceleration timeseries can be explicitly input as source in specfem2D simulation.
+
 SPECFEM2D allows users to perform 2D and 2.5D (i.e., axisymmetric) simulations
 of acoustic, elastic, viscoelastic, and poroelastic seismic wave propagation.
 The package can also be used for full waveform imaging (FWI) or adjoint tomography.
