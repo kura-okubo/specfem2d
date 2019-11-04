@@ -188,7 +188,7 @@
         " rect from ", elecoords(1,1), ",", elecoords(2,1), " to ", elecoords(1,3), ",", elecoords(2,3), &
         " fc rgb 'red'"
 
-        write(30, "(I6, 1F20.8, 1F20.8,1F20.8)") iele, DT, cx, cz
+        write(30, "(I6,',',1F20.8,',',1F20.8,',',1F20.8)") iele, DT, cx, cz
 
       endif
     enddo

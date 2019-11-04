@@ -1,13 +1,11 @@
-import obspy
 import numpy as np
+import pandas as pd
 import matplotlib.pyplot as plt
-from obspy import read, UTCDateTime
-from obspy.io.sac import SACTrace
 
 def ricker(f0=1.0, st=0.0, et=10.0, dt=0.1, init_t=0.0, amp=1.0):
 	"""
 	ricker(f0, st, et, init_t,amp)
-	returns time series of Ricker wavelet 
+	returns time series of Ricker wavelet
 	"""
 	# f0=1.0
 	# st=0.0
@@ -23,7 +21,7 @@ def ricker(f0=1.0, st=0.0, et=10.0, dt=0.1, init_t=0.0, amp=1.0):
 	if np.mod(Nr, 2) != 0:
 		Nr = Nr+1
 	rt = np.linspace(-rt0, rt0, num=2*Nr+1)
-	a = (np.pi*f0)**2 
+	a = (np.pi*f0)**2
 	ricker1 = amp*(1-2*a*rt**2)*np.exp(-a*rt**2)
 	stid = round(init_t/dt)
 	stshift = round(rt0/dt)
@@ -32,7 +30,18 @@ def ricker(f0=1.0, st=0.0, et=10.0, dt=0.1, init_t=0.0, amp=1.0):
 	return ricker, t
 
 
+fname="externalsource.txt"
+fi = open(fname,'r')
+temp_df = pd.read_csv(fi,  engine='python', sep =',', comment='#')
+fi.close()
+temp = temp_df.as_matrix()
 
+iele = temp[:,0]
+dt = temp[:,1]
+cx = temp[:,2]
+cz = temp[:,3]
+
+NumofCE = len(iele) #number of coupling elements
 
 f0=1.0
 st=0.0
