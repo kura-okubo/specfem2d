@@ -306,6 +306,9 @@
   ! 'ACOUSTIC_FORCING'
   write(IOUT) ACOUSTIC_FORCING
 
+  ! 'ACOUSTIC_FORCING'
+  write(IOUT) COUPLING_IN
+
   ! 'NUMBER_OF_SIMULTANEOUS_RUNS'
   write(IOUT) NUMBER_OF_SIMULTANEOUS_RUNS
 
@@ -678,6 +681,3 @@
                                      nelem_on_the_axis_loc, iproc, 2, remove_min_to_start_at_zero)
 
   end subroutine save_databases_axial_elements
-
-
-

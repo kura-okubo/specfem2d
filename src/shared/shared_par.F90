@@ -168,6 +168,15 @@ module shared_input_parameters
   ! acoustic forcing of an acoustic medium at a rigid interface
   logical :: ACOUSTIC_FORCING
 
+  ! COUPLING_IN
+  logical :: COUPLING_IN
+
+  ! coupling elements
+  double precision :: extori_x
+  double precision :: extori_z
+  double precision :: R_ext
+  double precision :: dR_ext
+
   !#-----------------------------------------------------------------------------
   !#
   !# receivers
@@ -422,5 +431,3 @@ module shared_parameters
   integer, dimension(:), allocatable :: nz_layer
 
 end module shared_parameters
-
-

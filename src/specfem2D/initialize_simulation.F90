@@ -386,4 +386,3 @@
   call synchronize_all()
 
   end subroutine initialize_GPU
-

@@ -199,6 +199,11 @@
   ! read the ACOUSTIC_FORCING flag
   read(IIN) ACOUSTIC_FORCING
 
+  ! read the COUPLING_IN flag
+  read(IIN) COUPLING_IN
+
+  write(*,*) "The COUPLING_IN is ", COUPLING_IN
+
   ! 'NUMBER_OF_SIMULTANEOUS_RUNS'
   read(IIN) NUMBER_OF_SIMULTANEOUS_RUNS
 
@@ -1074,7 +1079,7 @@
 
   use constants, only: IIN,IRIGHT,ILEFT,IBOTTOM,ITOP,IEDGE1,IEDGE2,IEDGE3,IEDGE4,IMAIN
 
-  use specfem_par, only: myrank,nelem_acforcing,nspec,ACOUSTIC_FORCING, &
+  use specfem_par, only: myrank,nelem_acforcing,nspec,ACOUSTIC_FORCING,&
                          ibegin_edge1_acforcing,iend_edge1_acforcing,ibegin_edge2_acforcing,iend_edge2_acforcing, &
                          ibegin_edge3_acforcing,iend_edge3_acforcing,ibegin_edge4_acforcing,iend_edge4_acforcing, &
                          numacforcing,codeacforcing,typeacforcing, &
@@ -1523,4 +1528,3 @@
   endif
 
   end subroutine read_mesh_databases_axial_elements
-

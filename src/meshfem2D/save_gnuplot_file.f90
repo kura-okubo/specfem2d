@@ -36,6 +36,8 @@
 ! creates a Gnuplot file that displays the grid
 
   use constants, only: IMAIN,OUTPUT_FILES
+  use shared_parameters, only: COUPLING_IN
+
 
   implicit none
 
@@ -97,15 +99,20 @@
   open(unit=20,file=trim(OUTPUT_FILES)//'plot_gridfile.gnu',status='unknown',iostat=ier)
   if (ier /= 0 ) call stop_the_code('Error saving plotgnu file')
 
-  write(20,*) '#set term wxt'
-  write(20,*) 'set term postscript landscape monochrome solid "Helvetica" 22'
-  write(20,*) 'set output "',trim(OUTPUT_FILES)//'gridfile.ps"'
+  write(20,*) '#set term qt'
+  write(20,*) 'set term postscript landscape color solid "Helvetica" 22'
+  write(20,*) 'set output "gridfile.ps" '
   write(20,*) '#set xrange [',sngl(minval(x)),':',sngl(maxval(x)),']'
   write(20,*) '#set yrange [',sngl(minval(z)),':',sngl(maxval(z)),']'
   ! use same unit length on both X and Y axes
   write(20,*) 'set size ratio -1'
   write(20,*) 'set loadpath "'//trim(OUTPUT_FILES)//'"'
-  write(20,*) 'plot "gridfile.gnu" title "Macrobloc mesh" w l'
+  write(*,*) "COUPLING_IN TEST:", COUPLING_IN
+  if (COUPLING_IN) then
+    write(*,*) "COUPLING_IN TEST:", COUPLING_IN
+    write(20,*) 'load "gridfile_externalsource.gnu"'
+  endif
+  write(20,*) 'plot "gridfile.gnu" title "Macrobloc mesh" w l lc "black"'
   write(20,*) 'pause -1 "Hit any key..."'
   close(20)
 

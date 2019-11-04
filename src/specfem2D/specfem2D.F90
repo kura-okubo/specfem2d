@@ -388,4 +388,3 @@
   call finalize_mpi()
 
   end program specfem2D
-

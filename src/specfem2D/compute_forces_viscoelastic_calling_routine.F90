@@ -62,6 +62,10 @@
     call compute_forces_viscoelastic(accel_elastic,veloc_elastic,displ_elastic,displ_elastic_old,dux_dxl_old,duz_dzl_old, &
                                      dux_dzl_plus_duz_dxl_old,PML_BOUNDARY_CONDITIONS,e1,e11,e13,iphase)
 
+    !Correct acceleration for coupling points
+    !write(*,*) COUPLING_IN
+    !if (COUPLING_IN) call add_ext_accel(.true.)
+
     ! computes additional contributions to acceleration field
     if (iphase == 1) then
 
@@ -86,6 +90,8 @@
       endif
 
       ! add force source
+      write(*,*) "Initial Field", initialfield
+      
       if (.not. initialfield) then
 
         select case(NOISE_TOMOGRAPHY)
@@ -335,4 +341,3 @@
   end select
 
   end subroutine compute_forces_viscoelastic_main_backward
-

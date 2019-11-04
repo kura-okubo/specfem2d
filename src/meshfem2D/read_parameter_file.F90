@@ -136,6 +136,7 @@
     call bcast_all_singlel(add_Bielak_conditions_top)
     call bcast_all_singlel(add_Bielak_conditions_left)
     call bcast_all_singlel(ACOUSTIC_FORCING)
+    call bcast_all_singlel(COUPLING_IN)
 
     call bcast_all_singlei(seismotype)
     call bcast_all_singlei(subsamp_seismos)
@@ -562,6 +563,43 @@
     write(*,*)
   endif
 
+  ! read COUPLING_IN flag
+  call read_value_logical_p(COUPLING_IN, 'COUPLING_IN')
+  if (err_occurred() /= 0) then
+    some_parameters_missing_from_Par_file = .true.
+    write(*,'(a)') 'COUPLING_IN                = .false.'
+    write(*,*)
+  endif
+
+  ! read COUPLING_IN parameters
+  call read_value_double_precision_p(extori_x, 'extori_x')
+  if (err_occurred() /= 0) then
+    some_parameters_missing_from_Par_file = .true.
+    write(*,'(a)') 'extori_x                = 0.d0'
+    write(*,*)
+  endif
+
+  call read_value_double_precision_p(extori_z, 'extori_z')
+  if (err_occurred() /= 0) then
+    some_parameters_missing_from_Par_file = .true.
+    write(*,'(a)') 'extori_z                = 0.d0'
+    write(*,*)
+  endif
+
+  call read_value_double_precision_p(R_ext, 'R_ext')
+  if (err_occurred() /= 0) then
+    some_parameters_missing_from_Par_file = .true.
+    write(*,'(a)') 'R_ext                = 0.d0'
+    write(*,*)
+  endif
+
+  call read_value_double_precision_p(dR_ext, 'dR_ext')
+  if (err_occurred() /= 0) then
+    some_parameters_missing_from_Par_file = .true.
+    write(*,'(a)') 'dR_ext                = 0.d0'
+    write(*,*)
+  endif
+
   !--------------------------------------------------------------------
   !
   ! receivers
@@ -600,7 +638,7 @@
   call read_value_double_precision_p(USER_T0, 'USER_T0')
   if (err_occurred() /= 0) then
     some_parameters_missing_from_Par_file = .true.
-    write(*,'(a)') 'USER_T0                         = 0.0d0'
+    write(*,'(a)') 'USER_T0                         = 0.d0'
     write(*,*)
   endif
 

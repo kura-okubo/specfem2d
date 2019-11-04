@@ -621,6 +621,7 @@ module specfem_par
   integer :: nspec_left,nspec_right,nspec_bottom,nspec_top
   integer, dimension(:), allocatable :: ib_left,ib_right,ib_bottom,ib_top
 
+
   ! current time step
   integer :: it
 
@@ -880,5 +881,3 @@ module specfem_par_movie
   logical, dimension(:), allocatable :: dump_duplicate_send, dump_duplicate_recv, dump_duplicate_gather
 
 end module specfem_par_movie
-
-

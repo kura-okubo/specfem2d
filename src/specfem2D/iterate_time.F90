@@ -134,7 +134,7 @@ subroutine iterate_time()
   do it = 1,NSTEP
     ! compute current time
     timeval = (it-1) * deltat
-
+    
     ! display time step and max of norm of displacement
     if (mod(it,NSTEP_BETWEEN_OUTPUT_INFO) == 0 .or. it == 5 .or. it == NSTEP) then
       call check_stability()
@@ -191,6 +191,8 @@ subroutine iterate_time()
     if (NO_BACKWARD_RECONSTRUCTION .and. (SAVE_FORWARD .or. SIMULATION_TYPE == 3) ) then
       call manage_no_backward_reconstruction_io()
     endif
+
+    write(*,*) "test NOISE_SAVE_EVERYWHERE", NOISE_SAVE_EVERYWHERE
 
     ! noise simulations
     select case (NOISE_TOMOGRAPHY)

@@ -67,4 +67,8 @@ obj/*
 *~
 
 # Output file
-EXAMPLES/*/OUTPUT/*
+EXAMPLES/*/OUTPUT_FILES/*
+EXAMPLES/*/OUTPUT_ALL/*
+
+#docs
+doc/call_trees_of_the_source_code/html/*

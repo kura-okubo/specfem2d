@@ -531,6 +531,11 @@
       call determine_abs_surface()
     endif
 
+    ! determines elements for external source coupling
+    if (COUPLING_IN) then
+      call determine_external_source_elements()
+    endif
+
     if (AXISYM) then
       if (read_external_mesh) then
         ! external meshing
@@ -671,5 +676,3 @@
   call finalize_mpi()
 
   end program meshfem2D
-
-

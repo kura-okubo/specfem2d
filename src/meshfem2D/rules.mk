@@ -51,6 +51,7 @@ meshfem2D_OBJECTS = \
 	$O/decompose_mesh.mesh.o \
 	$O/determine_abs_surface.mesh.o \
 	$O/determine_acoustic_surface.mesh.o \
+	$O/determine_external_source_elements.mesh.o \
 	$O/get_node_number.mesh.o \
 	$O/metis_partitioning.mesh.o \
 	$O/part_unstruct.mesh.o \
