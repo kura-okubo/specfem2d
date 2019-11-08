@@ -77,6 +77,7 @@ specfem2D_OBJECTS = \
 	$O/compute_coupling_viscoelastic_po.spec.o \
 	$O/compute_curl_one_element.spec.o \
 	$O/compute_energy.spec.o \
+	$O/compute_ext_source.spec.o \
 	$O/compute_forces_viscoacoustic.spec.o \
 	$O/compute_attenuation_viscoacoustic.spec.o \
 	$O/compute_forces_viscoacoustic_calling_routine.spec.o \

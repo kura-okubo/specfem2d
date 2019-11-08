@@ -430,4 +430,13 @@ module shared_parameters
   integer :: number_of_layers
   integer, dimension(:), allocatable :: nz_layer
 
+  !#-----------------------------------------------------------------------------
+  !#
+  !# external sources
+  !# added in github fork in github.com/kura-okubo/specfem2d
+  !#-----------------------------------------------------------------------------
+
+  integer, dimension(:), allocatable :: iele
+  double precision, dimension(:,:,:), allocatable :: extsource
+
 end module shared_parameters

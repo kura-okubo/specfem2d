@@ -47,29 +47,29 @@ else
 fi
 # checks exit code
 if [[ $? -ne 0 ]]; then exit 1; fi
-#
-# # runs simulation
-# if [ "$NPROC" -eq 1 ]; then
-#   # This is a serial simulation
-#   echo
-#   echo "running solver..."
-#   echo
-#   ../../bin/xspecfem2D
-# else
-#   # This is a MPI simulation
-#   echo
-#   echo "running solver on $NPROC processors..."
-#   echo
-#   mpirun -np $NPROC ../../bin/xspecfem2D
-# fi
-# # checks exit code
-# if [[ $? -ne 0 ]]; then exit 1; fi
-#
-# # stores output
-# cp DATA/*SOURCE* DATA/*STATIONS* OUTPUT_FILES
-#
-# echo
-# echo "see results in directory: OUTPUT_FILES/"
-# echo
+
+# runs simulation
+if [ "$NPROC" -eq 1 ]; then
+  # This is a serial simulation
+  echo
+  echo "running solver..."
+  echo
+  ../../bin/xspecfem2D
+else
+  # This is a MPI simulation
+  echo
+  echo "running solver on $NPROC processors..."
+  echo
+  mpirun -np $NPROC ../../bin/xspecfem2D
+fi
+# checks exit code
+if [[ $? -ne 0 ]]; then exit 1; fi
+
+# stores output
+cp DATA/*SOURCE* DATA/*STATIONS* OUTPUT_FILES
+
+echo
+echo "see results in directory: OUTPUT_FILES/"
+echo
 echo "done"
 echo `date`

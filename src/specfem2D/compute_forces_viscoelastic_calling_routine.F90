@@ -64,7 +64,7 @@
 
     !Correct acceleration for coupling points
     !write(*,*) COUPLING_IN
-    !if (COUPLING_IN) call add_ext_accel(.true.)
+    if (COUPLING_IN) call add_ext_source()
 
     ! computes additional contributions to acceleration field
     if (iphase == 1) then
@@ -91,7 +91,7 @@
 
       ! add force source
       write(*,*) "Initial Field", initialfield
-      
+
       if (.not. initialfield) then
 
         select case(NOISE_TOMOGRAPHY)
