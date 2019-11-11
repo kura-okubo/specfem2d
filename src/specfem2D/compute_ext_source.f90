@@ -34,15 +34,19 @@
   subroutine read_ext_source()
 
   ! reads in time series based on external source files
-  use constants, only: EXT_SOURCE_NUM_MAX, EXT_SOURCE_TRACE_MAX
-  use shared_parameters, only: iele, extsource
+  use constants, only: IMAIN, OUTPUT_FILES, CUSTOM_REAL, EXT_SOURCE_NUM_MAX, EXT_SOURCE_TRACE_MAX
+  use specfem_par, only: NSTEP
+  use shared_parameters, only: iele, extsource, number_of_extsource
   use shared_input_parameters, only: DT
 
-  ! local parameters
-  integer :: i, j, tid
-  character*200:: line
-  character*200:: extsource_filename, source_timeseries_name
+  implicit none
 
+  ! local parameters
+  integer :: i, tid
+  integer :: ier
+  double precision :: t_temp, ax_temp, az_temp
+  character(len=200):: line
+  character(len=200):: source_timeseries_name
   ! double precision :: DT
   ! double precision :: t_temp, ax_temp, az_temp
   ! character*200:: line
@@ -52,82 +56,176 @@
   ! integer :: i, j, tid
   ! double precision, dimension(100, 3, 100000) :: extsource
 
-  implicit none
 
   ! read external source element
 
-  extsource_filename = "./externalsource.txt"
-  open(unit=31,file=trim(extsource_filename),status='old',action='read',iostat=ier)
-  !if (ier /= 0) call stop_the_code('Error opening externalsource.txt, please make sure file exists...')
+  if (EXT_SOURCE_TRACE_MAX < NSTEP) then
+    call stop_the_code('EXT_SOURCE_TRACE_MAX is smaller than NSTEP: increase EXT_SOURCE_TRACE_MAX.')
+  endif
 
-  NumSource = 0
-  write(*,*) ier
+  allocate(iele(EXT_SOURCE_NUM_MAX))
+  allocate(extsource(3,EXT_SOURCE_TRACE_MAX,EXT_SOURCE_NUM_MAX))
+
+  ! initialize external source traces
+  extsource(:,:,:) = 0._CUSTOM_REAL
+
+  ! externalsource filename is fixed.
+
+  open(unit=32,file=trim(OUTPUT_FILES)//'externalsource.txt',status='old',action='read',iostat=ier)
+  if (ier /= 0) call stop_the_code('Error opening externalsource.txt, please make sure file exists...')
+
+  number_of_extsource = 0
 
   do while(ier == 0)
 
-    call read_extsource_id(31, line, ier)
+    call read_extsource_id(32, line, ier)
 
     write(*,*) line
     if (ier == 0) then
-      NumSource = NumSource + 1
-      read (line, *) iele(NumSource)
+      number_of_extsource = number_of_extsource + 1
+      read (line, *) iele(number_of_extsource)
     endif
 
-    !if (NumSource == 10000)then
-    !endif
+    if (number_of_extsource == EXT_SOURCE_NUM_MAX) then
+      call stop_the_code('Number of external source is too many. Abort.')
+    endif
   enddo
 
-  write(*,*) iele(1:NumSource)
-  write(*,*) NumSource
+  write(*,*) iele(1:number_of_extsource)
+  write(*,*) number_of_extsource
 
-  close (31)
+  close (32)
 
   ! read source time series
 
-  do i = 1, NumSource
-    write(source_timeseries_name, '("extsource/EXT",I0.5,".dat")') iele(i)
-    write(*,*) source_timeseries_name
-    open(unit=31,file=trim(source_timeseries_name),status='old',action='read',iostat=ier)
-    write(*,*) ier
+  do i = 1, number_of_extsource
 
-    !if (ier /= 0) call stop_the_code('Error opening source file, please make sure file exists...')
+    write(source_timeseries_name, '(A,"/EXT",I0.5,".dat")') './extsource', iele(i)
+    write(*,*) source_timeseries_name
+    open(unit=32,file=trim(source_timeseries_name),status='old',action='read',iostat=ier)
+    if (ier /= 0) call stop_the_code('Error opening external source file, please make sure file exists...')
+    write(*,*) ier
 
     ier = 0
     tid = 0
     do while(ier == 0)
-      read (31, *, iostat=ier) t_temp, ax_temp, az_temp
+      read (32, *, iostat=ier) t_temp, ax_temp, az_temp
       if (ier == 0) then
         ! nan check
         if ((ax_temp /= ax_temp) .or. (az_temp /= az_temp)) then
-          !if (ier /= 0) call stop_the_code('External source has NaN value. Please check the external source files.')
+          call stop_the_code('External source has NaN value. Please check the external source files.')
         endif
         tid = tid + 1
-        extsource(i, 1, tid) = t_temp
-        extsource(i, 2, tid) = ax_temp
-        extsource(i, 3, tid) = az_temp
+        extsource(1, tid, i) = t_temp
+        extsource(2, tid, i) = ax_temp
+        extsource(3, tid, i) = az_temp
       endif
     enddo
 
-    write(*,*) extsource(i, 3, 3000:3010)
-    close (31)
+    ! timestep check
+    if ((extsource(1, 2, i) - extsource(1, 1, i)) /= DT) then
+      call stop_the_code('Time step of external source is diferent with input file. Please check the time step.')
+    endif
+
+    write(*,*) extsource(2, 3000:3010, i)
+    close (32)
 
   enddo
 
+
+  write(IMAIN,*)
+  write(IMAIN,*) '*****************************************************'
+  write(IMAIN,*) '*** External source for injection of acceleration ***'
+  write(IMAIN,*) '*****************************************************'
+  write(IMAIN,*)
+  write(IMAIN,*) '*** Number of external source = ',number_of_extsource
+  write(IMAIN,*) '*** Time series length of external source = ',tid
+  write(IMAIN,*)
 
   end subroutine read_ext_source
 
   !========================================================================
 
-  subroutine add_ext_source()
+  subroutine add_ext_source(accel_elastic)
 
   ! inject the "source" from external source files
 
   ! use constants, only: EXT_SOURCE_NUM_MAX, EXT_SOURCE_TRACE_MAX
   ! use shared_parameters, only: iele, extsource
   ! use shared_input_parameters, only: DT
-  use constants, only: IMAIN
+
+
+  use constants, only: CUSTOM_REAL, IMAIN, NDIM, EXT_SOURCE_NUM_MAX, EXT_SOURCE_TRACE_MAX, &
+                      NGLLX,NGLLZ,NGLJ
+  use specfem_par, only: AXISYM, is_on_the_axis, nglob, P_SV, it, ibool, NSTEP, deltat, &
+                      xigll,zigll,xiglj
+  use shared_parameters, only: iele, extsource, number_of_extsource
+  use specfem_par_noise
 
   implicit none
+
+  ! local parameters
+  integer :: i, j, iglob, eleid, length_of_timeseries
+  double precision, dimension(NGLLX) :: hxi, hpxi
+  double precision, dimension(NGLLZ) :: hgamma, hpgamma
+  real(kind=CUSTOM_REAL), dimension(NDIM,nglob),intent(inout) :: accel_elastic
+  !integer :: ispec_noise
+  !double precision :: xi_noise, gamma_noise
+  ! double precision, dimension(NGLLX) :: xigll, hxi, hpxi
+  ! double precision, dimension(NGLJ) :: xiglj
+  ! double precision, dimension(NGLLZ) :: zigll, hgamma, hpgamma
+  double precision :: t0
+
+  t0 = ((NSTEP-1)/2.0_CUSTOM_REAL) * deltat
+  length_of_timeseries = size(extsource(1,:,1))
+
+  if (it == 1) then
+    write(IMAIN,*) "DEBUG: t0 IS ", t0
+    write(IMAIN,*) "DEBUG: length_of_timeseries IS ", length_of_timeseries
+  endif
+
+  if (AXISYM) then
+    if (is_on_the_axis(ispec_noise)) then
+      call lagrange_any(xi_noise,NGLJ,xiglj,hxi,hpxi)
+    else
+      call lagrange_any(xi_noise,NGLLX,xigll,hxi,hpxi)
+    endif
+  else
+    call lagrange_any(xi_noise,NGLLX,xigll,hxi,hpxi)
+  endif
+
+  call lagrange_any(gamma_noise,NGLLZ,zigll,hgamma,hpgamma)
+  !timeval = (it-1) * deltat
+
+  do eleid = 1, number_of_extsource
+    if (P_SV) then
+      ! P-SV calculation
+      do j = 1,NGLLZ
+        do i = 1,NGLLX
+          iglob = ibool(i,j,iele(eleid))
+          accel_elastic(1,iglob) = extsource(1,it,eleid) * hxi(i) * hgamma(j)
+          accel_elastic(2,iglob) = extsource(2,it,eleid) * hxi(i) * hgamma(j)
+          ! if (extsource(1,it,eleid) /= 0.0) then
+          !   write(IMAIN,*) accel_elastic(1,iglob)
+          ! endif
+
+        ! if (extsource(1,it,eleid) /= 0.0) then
+        !   write(IMAIN,*) accel_elastic(1,iglob)
+        ! endif
+        ! accel_elastic(1,iglob) = extsource(1,it,eleid)
+        ! accel_elastic(2,iglob) = extsource(2,it,eleid)
+        enddo
+      enddo
+    else
+      ! SH (membrane) calculation
+      do j = 1,NGLLZ
+        do i = 1,NGLLX
+          iglob = ibool(i,j,iele(eleid))
+          accel_elastic(1,iglob) = extsource(1,it,eleid) * hxi(i) * hgamma(j)
+        enddo
+      enddo
+    endif
+  enddo
 
   ! local parameters
   ! integer :: ier, NumSource
@@ -147,10 +245,75 @@
   ! integer :: i, j, tid
   ! double precision, dimension(100, 3, 100000) :: extsource
 
-  write(IMAIN,*)
-  write(IMAIN,*) "add_ext_source Test"
-  write(IMAIN,*)
+  ! write(IMAIN,*)
+  ! write(IMAIN,*) "add_ext_source Test"
+  ! write(IMAIN,*)
 
+  ! if (P_SV) then
+  !   ! P-SV simulation
+  !   do j = 1,NGLLZ
+  !     do i = 1,NGLLX
+  !       ! iglob = ibool(i,j,ispec_noise)
+  !       source_array_noise(1,i,j,:) = time_function_noise(:) * hxi(i) * hgamma(j)
+  !       source_array_noise(2,i,j,:) = time_function_noise(:) * hxi(i) * hgamma(j)
+  !     enddo
+  !   enddo
+  ! else
+  !   ! SH (membrane) simulation
+  !   do j = 1,NGLLZ
+  !     do i = 1,NGLLX
+  !       ! iglob = ibool(i,j,ispec_noise)
+  !       source_array_noise(1,i,j,:) = time_function_noise(:) * hxi(i) * hgamma(j)
+  !     enddo
+  !   enddo
+  ! endif
+  !
+  !
+
+
+  ! do ispec = 1, nspec
+  !   do j = 1, NGLLZ
+  !     do i = 1, NGLLX
+  !       iglob = ibool(i,j,ispec)
+  !       if (P_SV) then
+  !         ! P-SV calculation
+  !         !accel_elastic(1,iglob) = accel_elastic(1,iglob) + surface_movie_x_noise(iglob) * &
+  !         !                         mask_noise(iglob) * wxgll(i)*wzgll(j)*jacobian(i,j,ispec)
+  !         ! only vertical for now...
+  !         accel_elastic(2,iglob) = accel_elastic(2,iglob) + surface_movie_y_or_z_noise(iglob) * &
+  !                                  mask_noise(iglob) * wxgll(i)*wzgll(j)*jacobian(i,j,ispec)
+  !
+  !       else
+  !         ! SH (membrane) calculation
+  !         accel_elastic(1,iglob) = accel_elastic(1,iglob) + surface_movie_y_or_z_noise(iglob) * &
+  !                                  mask_noise(iglob) * wxgll(i)*wzgll(j)*jacobian(i,j,ispec)
+  !       endif
+  !     enddo
+  !   enddo
+  ! enddo
+
+
+  !local
+  ! integer :: i,j,iglob
+  !
+  ! if (P_SV) then
+  !   ! P-SV calculation
+  !   do j = 1,NGLLZ
+  !     do i = 1,NGLLX
+  !       iglob = ibool(i,j,ispec_noise)
+  !       accel_elastic(1,iglob) = accel_elastic(1,iglob) + sin(angle_noise)*source_array_noise(1,i,j,it)
+  !       accel_elastic(2,iglob) = accel_elastic(2,iglob) - cos(angle_noise)*source_array_noise(2,i,j,it)
+  !     enddo
+  !   enddo
+  ! else
+  !   ! SH (membrane) calculation
+  !   do j = 1,NGLLZ
+  !     do i = 1,NGLLX
+  !       iglob = ibool(i,j,ispec_noise)
+  !       accel_elastic(1,iglob) = accel_elastic(1,iglob) - source_array_noise(1,i,j,it)
+  !     enddo
+  !   enddo
+  ! endif
 
   end subroutine add_ext_source
 
@@ -158,7 +321,7 @@
   subroutine read_extsource_id(chan, line, ier)
      integer, intent(in):: chan
      integer, intent(inout):: ier
-     character*200, intent(inout):: line
+     character(len=200), intent(inout):: line
 
   10 continue
      read (chan, *, iostat=ier) line

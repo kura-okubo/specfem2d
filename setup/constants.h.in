@@ -134,6 +134,20 @@
 
 !!-----------------------------------------------------------
 !!
+!! external source
+!! added in github fork in github.com/kura-okubo/specfem2d
+!!-----------------------------------------------------------
+
+! Maximum number of sources for the static memory allocation
+  integer, parameter :: EXT_SOURCE_NUM_MAX = 1000
+
+! Maximum length of traces for external source
+  integer, parameter :: EXT_SOURCE_TRACE_MAX= 100000
+
+! Note: large number of these parameters above causes large memory allocation.
+
+!!-----------------------------------------------------------
+!!
 !! kernels
 !!
 !!-----------------------------------------------------------

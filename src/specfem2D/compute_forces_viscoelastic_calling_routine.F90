@@ -64,7 +64,7 @@
 
     !Correct acceleration for coupling points
     !write(*,*) COUPLING_IN
-    if (COUPLING_IN) call add_ext_source()
+    if (COUPLING_IN) call add_ext_source(accel_elastic)
 
     ! computes additional contributions to acceleration field
     if (iphase == 1) then
@@ -90,8 +90,6 @@
       endif
 
       ! add force source
-      write(*,*) "Initial Field", initialfield
-
       if (.not. initialfield) then
 
         select case(NOISE_TOMOGRAPHY)
@@ -119,6 +117,7 @@
           ! adjoint sources
           call compute_add_sources_viscoelastic_adjoint()
         endif
+
       endif
 
     endif

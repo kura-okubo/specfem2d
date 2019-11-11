@@ -106,6 +106,9 @@
   ! init specific to NO_BACKWARD_RECONSTRUCTION option
   call prepare_timerun_no_backward_reconstruction()
 
+  !read in parameters for external source
+  if (COUPLING_IN) call read_ext_source()
+
   ! prepares GPU arrays
   if (GPU_MODE) call prepare_GPU()
 
@@ -1179,9 +1182,6 @@
 
   !read in parameters for noise tomography
   call read_parameters_noise()
-
-  !read in parameters for external source
-  if (COUPLING_IN) call read_ext_source()
 
   if (NOISE_TOMOGRAPHY == 1) then
     call compute_source_array_noise()

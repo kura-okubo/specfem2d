@@ -438,5 +438,6 @@ module shared_parameters
 
   integer, dimension(:), allocatable :: iele
   double precision, dimension(:,:,:), allocatable :: extsource
+  integer :: number_of_extsource
 
 end module shared_parameters
