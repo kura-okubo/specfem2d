@@ -139,12 +139,16 @@
 
     write(30, *) "#-----------------------------------------------#"
     write(30, *) "# List of location for External source"
-    write(30, *) "# index of element, dt, cx, cy"
+    write(30, *) "#" 
+    write(30, *) "# index of element, dt, cx, cz"
+    write(30, *) "#"
     write(30, *) "# How to coupling:"
-    write(30, *) "# You need to obtain accerelation time series at cx, cy with dt, from other numerical solution."
-    write(30, *) "# Then, please make input files named as 'EXTXXXXX.dat' (XXXXX is index of element with zero padding)."
-    write(30, *) "# (Ex. EXT00012.dat)"
+    write(30, *) "# You need to obtain accerelation time series at cx, cz with dt, from other numerical solution."
+    write(30, *) "# Then, please make input files named as 'EXTXXXXXXXX.dat' (XXXXXXXX is index of element with zero padding)."
+    write(30, *) "# (Ex. EXT00000012.dat)"
     write(30, *) "# The contents should be t, ax, az"
+    write(30, *) "# Then, please make 'extsource' directory at the same directory with 'run_***.sh' (where you run the specfem)"
+    write(30, *) "# and locate all EXT********.dat files in the directory."
     write(30, *) "#-----------------------------------------------#"
 
     ! compute 4 nodes on element

@@ -30,6 +30,8 @@
 ! The full text of the license is available in file "LICENSE".
 !
 !========================================================================
+! added this subroutine by Kurama Okubo 11/2019
+!========================================================================
 
   subroutine read_ext_source()
 
@@ -100,7 +102,7 @@
 
   do i = 1, number_of_extsource
 
-    write(source_timeseries_name, '(A,"/EXT",I0.5,".dat")') './extsource', iele(i)
+    write(source_timeseries_name, '(A,"/EXT",I0.8,".dat")') './extsource', iele(i)
     write(*,*) source_timeseries_name
     open(unit=32,file=trim(source_timeseries_name),status='old',action='read',iostat=ier)
     if (ier /= 0) call stop_the_code('Error opening external source file, please make sure file exists...')

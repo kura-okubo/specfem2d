@@ -113,7 +113,7 @@
     write(20,*) 'load "gridfile_externalsource.gnu"'
   endif
   write(20,*) 'plot "gridfile.gnu" title "Macrobloc mesh" w l lc "black"'
-  write(20,*) 'pause -1 "Hit any key..."'
+  !write(20,*) 'pause -1 "Hit any key..."'
   close(20)
 
   write(IMAIN,*) 'Grid saved in Gnuplot format...'
