@@ -156,25 +156,22 @@
 
 
   use constants, only: CUSTOM_REAL, IMAIN, NDIM, EXT_SOURCE_NUM_MAX, EXT_SOURCE_TRACE_MAX, &
-                      NGLLX,NGLLZ,NGLJ
-  use specfem_par, only: AXISYM, is_on_the_axis, nglob, P_SV, it, ibool, NSTEP, deltat, &
-                      xigll,zigll,xiglj
+                      NGLLX,NGLLZ
+  use specfem_par, only: nglob, P_SV, it, ibool, jacobian, NSTEP, deltat, &
+                        wxgll,wzgll
   use shared_parameters, only: iele, extsource, number_of_extsource
-  use specfem_par_noise
 
   implicit none
 
   ! local parameters
-  integer :: i, j, iglob, eleid, length_of_timeseries
-  double precision, dimension(NGLLX) :: hxi, hpxi
-  double precision, dimension(NGLLZ) :: hgamma, hpgamma
+  integer :: i, j, k, iglob, eleid, length_of_timeseries
   real(kind=CUSTOM_REAL), dimension(NDIM,nglob),intent(inout) :: accel_elastic
-  !integer :: ispec_noise
-  !double precision :: xi_noise, gamma_noise
-  ! double precision, dimension(NGLLX) :: xigll, hxi, hpxi
-  ! double precision, dimension(NGLJ) :: xiglj
-  ! double precision, dimension(NGLLZ) :: zigll, hgamma, hpgamma
+  integer, dimension(2,number_of_extsource*NGLLZ*NGLLX) :: iglob_add_accel_smooth_idlist
+  integer :: iadd, ioverlap
+  logical :: is_iglob_overlap
+  !integer, dimension(2, number_of_extsource*NGLLZ*NGLLX) :: iglob_add_accel_smooth
   double precision :: t0
+
 
   t0 = ((NSTEP-1)/2.0_CUSTOM_REAL) * deltat
   length_of_timeseries = size(extsource(1,:,1))
@@ -184,18 +181,9 @@
     write(IMAIN,*) "DEBUG: length_of_timeseries IS ", length_of_timeseries
   endif
 
-  if (AXISYM) then
-    if (is_on_the_axis(ispec_noise)) then
-      call lagrange_any(xi_noise,NGLJ,xiglj,hxi,hpxi)
-    else
-      call lagrange_any(xi_noise,NGLLX,xigll,hxi,hpxi)
-    endif
-  else
-    call lagrange_any(xi_noise,NGLLX,xigll,hxi,hpxi)
-  endif
-
-  call lagrange_any(gamma_noise,NGLLZ,zigll,hgamma,hpgamma)
   !timeval = (it-1) * deltat
+  iadd = 0
+  ioverlap = 0
 
   do eleid = 1, number_of_extsource
     if (P_SV) then
@@ -203,17 +191,36 @@
       do j = 1,NGLLZ
         do i = 1,NGLLX
           iglob = ibool(i,j,iele(eleid))
-          accel_elastic(1,iglob) = extsource(1,it,eleid) * hxi(i) * hgamma(j)
-          accel_elastic(2,iglob) = extsource(2,it,eleid) * hxi(i) * hgamma(j)
-          ! if (extsource(1,it,eleid) /= 0.0) then
-          !   write(IMAIN,*) accel_elastic(1,iglob)
-          ! endif
 
-        ! if (extsource(1,it,eleid) /= 0.0) then
-        !   write(IMAIN,*) accel_elastic(1,iglob)
-        ! endif
-        ! accel_elastic(1,iglob) = extsource(1,it,eleid)
-        ! accel_elastic(2,iglob) = extsource(2,it,eleid)
+          is_iglob_overlap = .false.
+          ! find if the acceleration is already added to the iglob
+          ! this process is essentially only needed for once in the beginning, but
+          ! due to the readablility and not so efficient even if implementing subroutine
+          ! for the initialization of iglob_add_accel_smooth_idlist, we find it every time step.
+          ! iglob_add_accel_smooth_idlist (1,:) = iglob id
+          ! iglob_add_accel_smooth_idlist (2,:) = number of adding acceleration at the iglob
+
+          do k = 1, iadd
+              if (iglob_add_accel_smooth_idlist(1, k) .eq. iglob) then
+                  is_iglob_overlap = .true.
+                  iglob_add_accel_smooth_idlist(2, k) = iglob_add_accel_smooth_idlist(2, k) + 1
+                  exit
+              endif
+          end do
+
+          if (.not. is_iglob_overlap) then
+            ! this iglob is first time to add
+            accel_elastic(1,iglob) = extsource(1,it,eleid) * wxgll(i)*wzgll(j)*jacobian(i,j,iele(eleid))
+            accel_elastic(2,iglob) = extsource(2,it,eleid) * wxgll(i)*wzgll(j)*jacobian(i,j,iele(eleid))
+            iadd = iadd + 1
+            iglob_add_accel_smooth_idlist(1, iadd) = iglob
+            iglob_add_accel_smooth_idlist(2, iadd) = 1
+          else
+            ! this iglob already has value: it will be averaged
+            accel_elastic(1,iglob) = accel_elastic(1,iglob) + extsource(1,it,eleid) * wxgll(i)*wzgll(j)*jacobian(i,j,iele(eleid))
+            accel_elastic(2,iglob) = accel_elastic(2,iglob) + extsource(2,it,eleid) * wxgll(i)*wzgll(j)*jacobian(i,j,iele(eleid))
+          endif
+
         enddo
       enddo
     else
@@ -221,9 +228,43 @@
       do j = 1,NGLLZ
         do i = 1,NGLLX
           iglob = ibool(i,j,iele(eleid))
-          accel_elastic(1,iglob) = extsource(1,it,eleid) * hxi(i) * hgamma(j)
+          is_iglob_overlap = .false.
+
+          do k = 1, iadd
+              if (iglob_add_accel_smooth_idlist(1, k) .eq. iglob) then
+                  is_iglob_overlap = .true.
+                  iglob_add_accel_smooth_idlist(2, k) = iglob_add_accel_smooth_idlist(2, k) + 1
+                  exit
+              endif
+          end do
+
+          if (.not. is_iglob_overlap) then
+            ! this iglob is first time to add
+            accel_elastic(1,iglob) = extsource(1,it,eleid) * wxgll(i)*wzgll(j)*jacobian(i,j,iele(eleid))
+            iadd = iadd + 1
+            iglob_add_accel_smooth_idlist(1, iadd) = iglob
+            iglob_add_accel_smooth_idlist(2, iadd) = 1
+          else
+            ! this iglob already has value: it will be averaged
+            accel_elastic(1,iglob) = accel_elastic(1,iglob) + extsource(1,it,eleid) * wxgll(i)*wzgll(j)*jacobian(i,j,iele(eleid))
+          endif
+
         enddo
       enddo
+    endif
+  enddo
+
+  ! take an average based on the number of adding acceleration
+  do  k = 1,iadd
+    if (P_SV) then
+      !write(IMAIN,*) iglob_add_accel_smooth_idlist(1, k), iglob_add_accel_smooth_idlist(2, k)
+      accel_elastic(1,iglob_add_accel_smooth_idlist(1, k)) = &
+      accel_elastic(1,iglob_add_accel_smooth_idlist(1, k))/dble(iglob_add_accel_smooth_idlist(2, k))
+      accel_elastic(2,iglob_add_accel_smooth_idlist(1, k)) = &
+      accel_elastic(2,iglob_add_accel_smooth_idlist(1, k))/dble(iglob_add_accel_smooth_idlist(2, k))
+    else
+      accel_elastic(1,iglob_add_accel_smooth_idlist(1, k)) = &
+      accel_elastic(1,iglob_add_accel_smooth_idlist(1, k))/dble(iglob_add_accel_smooth_idlist(2, k))
     endif
   enddo
 
