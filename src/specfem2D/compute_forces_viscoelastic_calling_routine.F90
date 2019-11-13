@@ -62,9 +62,6 @@
     call compute_forces_viscoelastic(accel_elastic,veloc_elastic,displ_elastic,displ_elastic_old,dux_dxl_old,duz_dzl_old, &
                                      dux_dzl_plus_duz_dxl_old,PML_BOUNDARY_CONDITIONS,e1,e11,e13,iphase)
 
-    !Correct acceleration for coupling points
-    !write(*,*) COUPLING_IN
-    if (COUPLING_IN) call add_ext_source(accel_elastic)
 
     ! computes additional contributions to acceleration field
     if (iphase == 1) then
@@ -184,6 +181,11 @@
   else
     accel_elastic(:,:) = accel_elastic(:,:) * rmass_inverse_elastic(:,:)
   endif
+
+
+  !Correct acceleration for coupling points
+  !write(*,*) COUPLING_IN
+  if (COUPLING_IN) call add_ext_source(accel_elastic)
 
   ! time stepping
   select case (time_stepping_scheme)

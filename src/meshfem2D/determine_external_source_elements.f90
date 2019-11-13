@@ -79,16 +79,11 @@
     double precision, dimension (2, 4) :: elecoords
     double precision :: cx, cz
 
-    !temporal parameters in input file
-    ! double precision, dimension (2) :: origin_ext = (/ 0.d0, -50000.d0 /)
-    ! double precision                :: R_ext = 15000.d0
-    ! double precision                :: dR_ext = 5000.d0
-
-    write(IMAIN,*)
-    write(IMAIN,*) "Test determine_external_source_elements"
-    write(IMAIN,*)
-    write(IMAIN,*) "Size of elmnts: ", size(elmnts)
-    write(IMAIN,*)
+    ! write(IMAIN,*)
+    ! write(IMAIN,*) "Test determine_external_source_elements"
+    ! write(IMAIN,*)
+    ! write(IMAIN,*) "Size of elmnts: ", size(elmnts)
+    ! write(IMAIN,*)
 
     if (ngnod == 4) then
       num_elmnt = size(elmnts)/ngnod
@@ -98,24 +93,24 @@
       call stop_the_code('ngnod should be either 4 or 9')
     endif
 
-    write(IMAIN,*) "Number of elements: ", num_elmnt
-    write(IMAIN,*)
-
-    write(IMAIN,*) "nx, nz ", nx, nz
-    write(IMAIN,*)
+    ! write(IMAIN,*) "Number of elements: ", num_elmnt
+    ! write(IMAIN,*)
+    !
+    ! write(IMAIN,*) "nx, nz ", nx, nz
+    ! write(IMAIN,*)
 
     if (ngnod == 4) then
       do j = 0, nz
         do i = 0, nx
           num_node = num_4(i,j,nxread)
-          write(IMAIN,*) num_node, nodes_coords(1, num_node), nodes_coords(2, num_node)
+          !write(IMAIN,*) num_node, nodes_coords(1, num_node), nodes_coords(2, num_node)
         enddo
       enddo
     else if (ngnod == 9) then
       do j = 0, nz
         do i = 0, nx
           num_node = num_9(i,j,nxread,nzread)
-          write(IMAIN,*) num_node, nodes_coords(1, num_node), nodes_coords(2, num_node)
+          !write(IMAIN,*) num_node, nodes_coords(1, num_node), nodes_coords(2, num_node)
         enddo
       enddo
     else
@@ -139,7 +134,7 @@
 
     write(30, *) "#-----------------------------------------------#"
     write(30, *) "# List of location for External source"
-    write(30, *) "#" 
+    write(30, *) "#"
     write(30, *) "# index of element, dt, cx, cz"
     write(30, *) "#"
     write(30, *) "# How to coupling:"
@@ -171,7 +166,7 @@
         npele(4) = num_9(nxele-1,nzele,nxread,nzread)
       endif
 
-      write(IMAIN,*) iele, nxele, nzele, ": ", npele(1), npele(2), npele(3), npele(4)
+      !write(IMAIN,*) iele, nxele, nzele, ": ", npele(1), npele(2), npele(3), npele(4)
 
       ! obtain coordinates
       do i = 1,4
@@ -182,10 +177,10 @@
       cx = sum(elecoords(1,:))/4.d0
       cz = sum(elecoords(2,:))/4.d0
 
-      write(IMAIN,*) "cx, cz: ", cx, cz
+      !write(IMAIN,*) "cx, cz: ", cx, cz
 
       if (abs(R_ext-sqrt((cx-extori_x)**2+(cz-extori_z)**2)) < dR_ext) then
-        write(IMAIN,*) "This element goes to source element.", cx, cz, elecoords(1,1), elecoords(2,1)
+        !write(IMAIN,*) "This element goes to source element.", cx, cz, elecoords(1,1), elecoords(2,1)
         num_sourceele = num_sourceele + 1
 
         write(20, "(A,I6,A,1F20.8,A,1F20.8,A,1F20.8,A,1F20.8,A)") "set object ", num_sourceele, &

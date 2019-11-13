@@ -49,15 +49,6 @@
   double precision :: t_temp, ax_temp, az_temp
   character(len=200):: line
   character(len=200):: source_timeseries_name
-  ! double precision :: DT
-  ! double precision :: t_temp, ax_temp, az_temp
-  ! character*200:: line
-  ! character*200:: extsource_filename, source_timeseries_name
-  ! integer :: ier, NumSource
-  ! integer, dimension(100) :: iele
-  ! integer :: i, j, tid
-  ! double precision, dimension(100, 3, 100000) :: extsource
-
 
   ! read external source element
 
@@ -82,7 +73,6 @@
 
     call read_extsource_id(32, line, ier)
 
-    write(*,*) line
     if (ier == 0) then
       number_of_extsource = number_of_extsource + 1
       read (line, *) iele(number_of_extsource)
@@ -93,9 +83,6 @@
     endif
   enddo
 
-  write(*,*) iele(1:number_of_extsource)
-  write(*,*) number_of_extsource
-
   close (32)
 
   ! read source time series
@@ -103,10 +90,9 @@
   do i = 1, number_of_extsource
 
     write(source_timeseries_name, '(A,"/EXT",I0.8,".dat")') './extsource', iele(i)
-    write(*,*) source_timeseries_name
+    !write(*,*) source_timeseries_name
     open(unit=32,file=trim(source_timeseries_name),status='old',action='read',iostat=ier)
     if (ier /= 0) call stop_the_code('Error opening external source file, please make sure file exists...')
-    write(*,*) ier
 
     ier = 0
     tid = 0
@@ -125,11 +111,11 @@
     enddo
 
     ! timestep check
-    if ((extsource(1, 2, i) - extsource(1, 1, i)) /= DT) then
+    if (abs((extsource(1, 2, i) - extsource(1, 1, i)) - DT) > 1.d-4*DT) then
       call stop_the_code('Time step of external source is diferent with input file. Please check the time step.')
     endif
 
-    write(*,*) extsource(2, 3000:3010, i)
+    !write(*,*) extsource(2, 3000:3010, i)
     close (32)
 
   enddo
@@ -151,16 +137,10 @@
   subroutine add_ext_source(accel_elastic)
 
   ! inject the "source" from external source files
-
-  ! use constants, only: EXT_SOURCE_NUM_MAX, EXT_SOURCE_TRACE_MAX
-  ! use shared_parameters, only: iele, extsource
-  ! use shared_input_parameters, only: DT
-
-
   use constants, only: CUSTOM_REAL, IMAIN, NDIM, EXT_SOURCE_NUM_MAX, EXT_SOURCE_TRACE_MAX, &
                       NGLLX,NGLLZ
-  use specfem_par, only: nglob, P_SV, it, ibool, jacobian, NSTEP, deltat, &
-                        wxgll,wzgll
+  use specfem_par, only: nglob, P_SV, it, ibool, NSTEP, deltat
+
   use shared_parameters, only: iele, extsource, number_of_extsource
 
   implicit none
@@ -171,17 +151,11 @@
   integer, dimension(2,number_of_extsource*NGLLZ*NGLLX) :: iglob_add_accel_smooth_idlist
   integer :: iadd, ioverlap
   logical :: is_iglob_overlap
-  !integer, dimension(2, number_of_extsource*NGLLZ*NGLLX) :: iglob_add_accel_smooth
   double precision :: t0
 
 
   t0 = ((NSTEP-1)/2.0_CUSTOM_REAL) * deltat
   length_of_timeseries = size(extsource(1,:,1))
-
-  if (it == 1) then
-    write(IMAIN,*) "DEBUG: t0 IS ", t0
-    write(IMAIN,*) "DEBUG: length_of_timeseries IS ", length_of_timeseries
-  endif
 
   !timeval = (it-1) * deltat
   iadd = 0
@@ -212,15 +186,16 @@
 
           if (.not. is_iglob_overlap) then
             ! this iglob is first time to add
-            accel_elastic(1,iglob) = extsource(1,it,eleid) * wxgll(i)*wzgll(j)*jacobian(i,j,iele(eleid))
-            accel_elastic(2,iglob) = extsource(2,it,eleid) * wxgll(i)*wzgll(j)*jacobian(i,j,iele(eleid))
+            accel_elastic(1,iglob) = extsource(2,it,eleid)
+            accel_elastic(2,iglob) = extsource(3,it,eleid)
             iadd = iadd + 1
             iglob_add_accel_smooth_idlist(1, iadd) = iglob
             iglob_add_accel_smooth_idlist(2, iadd) = 1
+
           else
             ! this iglob already has value: it will be averaged
-            accel_elastic(1,iglob) = accel_elastic(1,iglob) + extsource(1,it,eleid) * wxgll(i)*wzgll(j)*jacobian(i,j,iele(eleid))
-            accel_elastic(2,iglob) = accel_elastic(2,iglob) + extsource(2,it,eleid) * wxgll(i)*wzgll(j)*jacobian(i,j,iele(eleid))
+            accel_elastic(1,iglob) = accel_elastic(1,iglob) + extsource(2,it,eleid)
+            accel_elastic(2,iglob) = accel_elastic(2,iglob) + extsource(3,it,eleid)
           endif
 
         enddo
@@ -242,13 +217,14 @@
 
           if (.not. is_iglob_overlap) then
             ! this iglob is first time to add
-            accel_elastic(1,iglob) = extsource(1,it,eleid) * wxgll(i)*wzgll(j)*jacobian(i,j,iele(eleid))
+            accel_elastic(1,iglob) = extsource(2,it,eleid)
             iadd = iadd + 1
             iglob_add_accel_smooth_idlist(1, iadd) = iglob
             iglob_add_accel_smooth_idlist(2, iadd) = 1
+
           else
             ! this iglob already has value: it will be averaged
-            accel_elastic(1,iglob) = accel_elastic(1,iglob) + extsource(1,it,eleid) * wxgll(i)*wzgll(j)*jacobian(i,j,iele(eleid))
+            accel_elastic(1,iglob) = accel_elastic(1,iglob) + extsource(2,it,eleid)
           endif
 
         enddo
@@ -269,94 +245,6 @@
       accel_elastic(1,iglob_add_accel_smooth_idlist(1, k))/dble(iglob_add_accel_smooth_idlist(2, k))
     endif
   enddo
-
-  ! local parameters
-  ! integer :: ier, NumSource
-  ! double precision :: t_temp, ax_temp, az_temp
-  ! integer :: i,j, tid
-  ! character*200:: line
-  ! character*200:: extsource_filename, source_timeseries_name
-
-  !allocate(iele(EXT_SOURCE_NUM_MAX),stat=ier)
-  !if (ier /= 0) call stop_the_code('Error allocating array iele')
-  ! double precision :: DT
-  ! double precision :: t_temp, ax_temp, az_temp
-  ! character*200:: line
-  ! character*200:: extsource_filename, source_timeseries_name
-  ! integer :: ier, NumSource
-  ! integer, dimension(100) :: iele
-  ! integer :: i, j, tid
-  ! double precision, dimension(100, 3, 100000) :: extsource
-
-  ! write(IMAIN,*)
-  ! write(IMAIN,*) "add_ext_source Test"
-  ! write(IMAIN,*)
-
-  ! if (P_SV) then
-  !   ! P-SV simulation
-  !   do j = 1,NGLLZ
-  !     do i = 1,NGLLX
-  !       ! iglob = ibool(i,j,ispec_noise)
-  !       source_array_noise(1,i,j,:) = time_function_noise(:) * hxi(i) * hgamma(j)
-  !       source_array_noise(2,i,j,:) = time_function_noise(:) * hxi(i) * hgamma(j)
-  !     enddo
-  !   enddo
-  ! else
-  !   ! SH (membrane) simulation
-  !   do j = 1,NGLLZ
-  !     do i = 1,NGLLX
-  !       ! iglob = ibool(i,j,ispec_noise)
-  !       source_array_noise(1,i,j,:) = time_function_noise(:) * hxi(i) * hgamma(j)
-  !     enddo
-  !   enddo
-  ! endif
-  !
-  !
-
-
-  ! do ispec = 1, nspec
-  !   do j = 1, NGLLZ
-  !     do i = 1, NGLLX
-  !       iglob = ibool(i,j,ispec)
-  !       if (P_SV) then
-  !         ! P-SV calculation
-  !         !accel_elastic(1,iglob) = accel_elastic(1,iglob) + surface_movie_x_noise(iglob) * &
-  !         !                         mask_noise(iglob) * wxgll(i)*wzgll(j)*jacobian(i,j,ispec)
-  !         ! only vertical for now...
-  !         accel_elastic(2,iglob) = accel_elastic(2,iglob) + surface_movie_y_or_z_noise(iglob) * &
-  !                                  mask_noise(iglob) * wxgll(i)*wzgll(j)*jacobian(i,j,ispec)
-  !
-  !       else
-  !         ! SH (membrane) calculation
-  !         accel_elastic(1,iglob) = accel_elastic(1,iglob) + surface_movie_y_or_z_noise(iglob) * &
-  !                                  mask_noise(iglob) * wxgll(i)*wzgll(j)*jacobian(i,j,ispec)
-  !       endif
-  !     enddo
-  !   enddo
-  ! enddo
-
-
-  !local
-  ! integer :: i,j,iglob
-  !
-  ! if (P_SV) then
-  !   ! P-SV calculation
-  !   do j = 1,NGLLZ
-  !     do i = 1,NGLLX
-  !       iglob = ibool(i,j,ispec_noise)
-  !       accel_elastic(1,iglob) = accel_elastic(1,iglob) + sin(angle_noise)*source_array_noise(1,i,j,it)
-  !       accel_elastic(2,iglob) = accel_elastic(2,iglob) - cos(angle_noise)*source_array_noise(2,i,j,it)
-  !     enddo
-  !   enddo
-  ! else
-  !   ! SH (membrane) calculation
-  !   do j = 1,NGLLZ
-  !     do i = 1,NGLLX
-  !       iglob = ibool(i,j,ispec_noise)
-  !       accel_elastic(1,iglob) = accel_elastic(1,iglob) - source_array_noise(1,i,j,it)
-  !     enddo
-  !   enddo
-  ! endif
 
   end subroutine add_ext_source
 
