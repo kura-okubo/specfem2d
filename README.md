@@ -1,6 +1,9 @@
 # SPECFEM2D
 
-### This fork is extended from original source (https://github.com/geodynamics/specfem2d.git) to couple specfem2D with other numerical framework to model the dynamic earthquake rupture. The acceleration timeseries can be explicitly input as source in specfem2D simulation.
+### This fork is extended from original source (https://github.com/geodynamics/specfem2d.git) to couple specfem2D with other numerical framework to model the dynamic earthquake rupture. The acceleration timeseries can be explicitly input as source in specfem2D simulation. 
+
+**See http://htmlpreview.github.io/?https://github.com/kura-okubo/specfem2d/blob/master/EXAMPLES/Validation/note/Note_of_Specfem2DCoupling.html**
+
 
 SPECFEM2D allows users to perform 2D and 2.5D (i.e., axisymmetric) simulations
 of acoustic, elastic, viscoelastic, and poroelastic seismic wave propagation.
