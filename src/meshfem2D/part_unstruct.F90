@@ -145,7 +145,9 @@
   !--------------------------------------------------
   subroutine construct_glob2loc_elmnts(nparts)
 
-  use part_unstruct_par, only: glob2loc_elmnts,nelmnts,part
+  use constants, only: IOUT, MAX_STRING_LEN, OUTPUT_FILES
+  use part_unstruct_par, only: glob2loc_elmnts,nelmnts,part,iproc
+  use shared_parameters, only: COUPLING_IN
 
   implicit none
   integer, intent(in)  :: nparts
@@ -153,7 +155,9 @@
   integer  :: num_glob, num_part
   integer, dimension(0:nparts-1)  :: num_loc
 
-  write(*,*) "nparts: ", nparts
+  ! for glob2loc_eleid table
+  integer :: ier
+  character(len=MAX_STRING_LEN) :: prname
 
   allocate(glob2loc_elmnts(0:nelmnts-1))
 
@@ -168,9 +172,30 @@
   do num_glob = 0, nelmnts-1
     num_part = part(num_glob)
     glob2loc_elmnts(num_glob) = num_loc(num_part)
-    write(*,*) "glob2loc_elmnts(", num_glob,") = ", glob2loc_elmnts(num_glob)
+    !write(*,*) "glob2loc_elmnts(", num_glob,") = ", glob2loc_elmnts(num_glob)
     num_loc(num_part) = num_loc(num_part) + 1
   enddo
+
+  ! make glob2loc_eleid table for acceleration injection
+  if (iproc == 0) then
+    if (COUPLING_IN) then
+      write(*,*) "nparts: ", nparts
+
+      do num_glob = 0, nelmnts-1
+        write(*,*) "id_glob, rank, loc_id: ", num_glob+1, part(num_glob), glob2loc_elmnts(num_glob) + 1
+
+        ! opens Database file
+        write(prname, "(a,i5.5,a)") './'//trim(OUTPUT_FILES)//'glob2loc_table.bin'
+        open(unit=IOUT,file=trim(prname),status='unknown',action='write',form='unformatted',iostat=ier)
+        if (ier /= 0 ) call stop_the_code('Error saving databases; check that directory OUTPUT_FILES exists')
+
+        write(IOUT) num_glob+1,  part(num_glob), glob2loc_elmnts(num_glob) + 1
+
+      enddo
+      ! closes Database file
+      close(IOUT)
+    endif
+  endif
 
   end subroutine construct_glob2loc_elmnts
 

@@ -694,6 +694,11 @@ module specfem_par
   ! for seismograms
   double precision, dimension(:,:), allocatable :: sisux,sisuz,siscurl
 
+  !---------------------------------------------------------------------
+  ! for coupling with acceleration injection
+  !---------------------------------------------------------------------
+  integer, dimension(:, :), allocatable :: glob2loc_table
+
 end module specfem_par
 
 !=====================================================================

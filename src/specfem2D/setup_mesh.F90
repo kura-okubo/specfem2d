@@ -37,6 +37,7 @@
 
   use constants, only: IMAIN
   use specfem_par
+  use shared_parameters, only: COUPLING_IN
 
   implicit none
 
@@ -78,6 +79,9 @@
 
   ! sets up MPI arrays and interfaces
   call get_MPI()
+
+  ! sets up glob2loc table for coupling with acceleration injection
+  if (COUPLING_IN) call setup_glob2loctable()
 
   ! user output
   if (myrank == 0) then
@@ -722,3 +726,30 @@
   call synchronize_all()
 
   end subroutine setup_mesh_domains
+
+  !
+  !-----------------------------------------------------------------------------------
+  !
+  subroutine setup_glob2loctable()
+    ! read glob2loctable for acceleration injection at coupling elements
+    use constants, only: IMAIN, OUTPUT_FILES
+    use specfem_par, only: glob2loc_table, nspec
+
+    implicit none
+
+    integer :: i, ier, nspec_total
+
+    call sum_all_i(nspec, nspec_total)
+
+    allocate(glob2loc_table(nspec_total, 3))
+
+    open(unit=2040, file=trim(OUTPUT_FILES)//'glob2loc_table.bin',status='old', form='unformatted', iostat=ier)
+    if (ier /= 0) call stop_the_code('Failed to open glob2loc_table.bin with COUPLING_IN = .true. Please check the file.')
+
+    do i = 1, nspec_total
+      read(2040) glob2loc_table(i, 1), glob2loc_table(i, 2), glob2loc_table(i, 3)
+      !write(IMAIN,*) glob2loc_table(i, 1), glob2loc_table(i, 2), glob2loc_table(i, 3)
+    enddo
+    close(2040)
+
+  end subroutine setup_glob2loctable
