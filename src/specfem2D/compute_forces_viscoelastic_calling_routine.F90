@@ -62,7 +62,6 @@
     call compute_forces_viscoelastic(accel_elastic,veloc_elastic,displ_elastic,displ_elastic_old,dux_dxl_old,duz_dzl_old, &
                                      dux_dzl_plus_duz_dxl_old,PML_BOUNDARY_CONDITIONS,e1,e11,e13,iphase)
 
-
     ! computes additional contributions to acceleration field
     if (iphase == 1) then
 
@@ -124,6 +123,7 @@
       call enforce_zero_radial_displacements_on_the_axis()
     endif
 
+
 #ifdef USE_MPI
     ! LDDRK
     ! daniel: when is this needed? veloc_elastic at it == 1 and i_stage == 1 is zero for non-initialfield simulations.
@@ -153,6 +153,7 @@
         call assemble_MPI_vector_el_w(accel_elastic)
       endif
     endif
+
 #endif
 
   enddo ! iphase
@@ -185,7 +186,18 @@
 
   !Correct acceleration for coupling points
   !write(*,*) COUPLING_IN
-  if (COUPLING_IN) call add_ext_source(accel_elastic)
+
+  do iphase = 1,2
+    if (COUPLING_IN) then
+      if (NPROC == 1) then
+        call add_ext_source(accel_elastic, iphase)
+      else
+        !call synchronize_all()
+        call add_ext_source(accel_elastic, iphase)
+      endif
+    endif
+  enddo
+
 
   ! time stepping
   select case (time_stepping_scheme)

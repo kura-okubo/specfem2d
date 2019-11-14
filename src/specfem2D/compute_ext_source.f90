@@ -37,7 +37,7 @@
 
   ! reads in time series based on external source files
   use constants, only: IMAIN, OUTPUT_FILES, CUSTOM_REAL, EXT_SOURCE_NUM_MAX, EXT_SOURCE_TRACE_MAX
-  use specfem_par, only: NSTEP
+  use specfem_par, only: myrank, NSTEP
   use shared_parameters, only: iele, extsource, number_of_extsource
   use shared_input_parameters, only: DT
 
@@ -121,25 +121,28 @@
   enddo
 
 
-  write(IMAIN,*)
-  write(IMAIN,*) '*****************************************************'
-  write(IMAIN,*) '*** External source for injection of acceleration ***'
-  write(IMAIN,*) '*****************************************************'
-  write(IMAIN,*)
-  write(IMAIN,*) '*** Number of external source = ',number_of_extsource
-  write(IMAIN,*) '*** Time series length of external source = ',tid
-  write(IMAIN,*)
+  if (myrank==0) then
+    write(IMAIN,*)
+    write(IMAIN,*) '*****************************************************'
+    write(IMAIN,*) '*** External source for injection of acceleration ***'
+    write(IMAIN,*) '*****************************************************'
+    write(IMAIN,*)
+    write(IMAIN,*) '*** Number of external source = ',number_of_extsource
+    write(IMAIN,*) '*** Time series length of external source = ',tid
+    write(IMAIN,*)
+  endif
 
   end subroutine read_ext_source
 
   !========================================================================
 
-  subroutine add_ext_source(accel_elastic)
+  subroutine add_ext_source(accel_elastic, iphase)
 
   ! inject the "source" from external source files
   use constants, only: CUSTOM_REAL, IMAIN, NDIM, EXT_SOURCE_NUM_MAX, EXT_SOURCE_TRACE_MAX, &
                       NGLLX,NGLLZ
-  use specfem_par, only: nglob, P_SV, it, ibool, NSTEP, deltat
+  use specfem_par, only: nglob, P_SV, it, ibool, NSTEP, deltat, myrank, &
+                    nspec_inner_elastic,nspec_outer_elastic,phase_ispec_inner_elastic
 
   use shared_parameters, only: iele, extsource, number_of_extsource
 
@@ -153,98 +156,168 @@
   logical :: is_iglob_overlap
   double precision :: t0
 
+  !double precision :: dummy
+  ! non blocking MPI
+  ! iphase: iphase = 1 is for computing outer elements (on MPI interface),
+  !         iphase = 2 is for computing inner elements
+  !integer :: iphase
+  integer,intent(in) :: iphase
+  integer :: num_elements,ispec_p, num_modified_ele
+  logical :: is_ispec_in
 
-  t0 = ((NSTEP-1)/2.0_CUSTOM_REAL) * deltat
-  length_of_timeseries = size(extsource(1,:,1))
-
-  !timeval = (it-1) * deltat
-  iadd = 0
-  ioverlap = 0
-
-  do eleid = 1, number_of_extsource
-    if (P_SV) then
-      ! P-SV calculation
-      do j = 1,NGLLZ
-        do i = 1,NGLLX
-          iglob = ibool(i,j,iele(eleid))
-
-          is_iglob_overlap = .false.
-          ! find if the acceleration is already added to the iglob
-          ! this process is essentially only needed for once in the beginning, but
-          ! due to the readablility and not so efficient even if implementing subroutine
-          ! for the initialization of iglob_add_accel_smooth_idlist, we find it every time step.
-          ! iglob_add_accel_smooth_idlist (1,:) = iglob id
-          ! iglob_add_accel_smooth_idlist (2,:) = number of adding acceleration at the iglob
-
-          do k = 1, iadd
-              if (iglob_add_accel_smooth_idlist(1, k) .eq. iglob) then
-                  is_iglob_overlap = .true.
-                  iglob_add_accel_smooth_idlist(2, k) = iglob_add_accel_smooth_idlist(2, k) + 1
-                  exit
-              endif
-          end do
-
-          if (.not. is_iglob_overlap) then
-            ! this iglob is first time to add
-            accel_elastic(1,iglob) = extsource(2,it,eleid)
-            accel_elastic(2,iglob) = extsource(3,it,eleid)
-            iadd = iadd + 1
-            iglob_add_accel_smooth_idlist(1, iadd) = iglob
-            iglob_add_accel_smooth_idlist(2, iadd) = 1
-
-          else
-            ! this iglob already has value: it will be averaged
-            accel_elastic(1,iglob) = accel_elastic(1,iglob) + extsource(2,it,eleid)
-            accel_elastic(2,iglob) = accel_elastic(2,iglob) + extsource(3,it,eleid)
-          endif
-
-        enddo
-      enddo
+  !if (myrank==1) then
+    ! choses inner/outer elements
+    if (iphase == 1) then
+      num_elements = nspec_outer_elastic
     else
-      ! SH (membrane) calculation
-      do j = 1,NGLLZ
-        do i = 1,NGLLX
-          iglob = ibool(i,j,iele(eleid))
-          is_iglob_overlap = .false.
+      num_elements = nspec_inner_elastic
+    endif
 
-          do k = 1, iadd
-              if (iglob_add_accel_smooth_idlist(1, k) .eq. iglob) then
-                  is_iglob_overlap = .true.
-                  iglob_add_accel_smooth_idlist(2, k) = iglob_add_accel_smooth_idlist(2, k) + 1
-                  exit
-              endif
-          end do
+    !write(IMAIN,*) "test 1"
 
-          if (.not. is_iglob_overlap) then
-            ! this iglob is first time to add
-            accel_elastic(1,iglob) = extsource(2,it,eleid)
-            iadd = iadd + 1
-            iglob_add_accel_smooth_idlist(1, iadd) = iglob
-            iglob_add_accel_smooth_idlist(2, iadd) = 1
+    t0 = ((NSTEP-1)/2.0_CUSTOM_REAL) * deltat
+    length_of_timeseries = size(extsource(1,:,1))
 
-          else
-            ! this iglob already has value: it will be averaged
-            accel_elastic(1,iglob) = accel_elastic(1,iglob) + extsource(2,it,eleid)
-          endif
+    !timeval = (it-1) * deltat
+    iadd = 0
+    ioverlap = 0
+    !
+    ! do eleid = 1, number_of_extsource
+    !   write(IMAIN, *) iele(eleid)
+    ! enddo
+    num_modified_ele = 0
 
-        enddo
+    !write(IMAIN, *) " myrank, iphase, number_of_extsource: ", myrank, iphase, number_of_extsource
+
+    do eleid = 1, number_of_extsource
+
+      ! check if iele(eleid) is in the ispec_plist
+      is_ispec_in = .false.
+      do ispec_p = 1,num_elements
+        if (iele(eleid) == phase_ispec_inner_elastic(ispec_p,iphase)) then
+          is_ispec_in = .true.
+          write(IMAIN, *) "myrank, iphase, modifiediele: ", myrank, iphase, iele(eleid)
+          exit
+        endif
       enddo
-    endif
-  enddo
 
-  ! take an average based on the number of adding acceleration
-  do  k = 1,iadd
-    if (P_SV) then
-      !write(IMAIN,*) iglob_add_accel_smooth_idlist(1, k), iglob_add_accel_smooth_idlist(2, k)
-      accel_elastic(1,iglob_add_accel_smooth_idlist(1, k)) = &
-      accel_elastic(1,iglob_add_accel_smooth_idlist(1, k))/dble(iglob_add_accel_smooth_idlist(2, k))
-      accel_elastic(2,iglob_add_accel_smooth_idlist(1, k)) = &
-      accel_elastic(2,iglob_add_accel_smooth_idlist(1, k))/dble(iglob_add_accel_smooth_idlist(2, k))
-    else
-      accel_elastic(1,iglob_add_accel_smooth_idlist(1, k)) = &
-      accel_elastic(1,iglob_add_accel_smooth_idlist(1, k))/dble(iglob_add_accel_smooth_idlist(2, k))
-    endif
-  enddo
+      if (is_ispec_in) then
+
+        num_modified_ele = num_modified_ele + 1
+        !write(IMAIN, *) iele(eleid)
+
+        if (P_SV) then
+          ! P-SV calculation
+          do j = 1,NGLLZ
+            do i = 1,NGLLX
+              iglob = ibool(i,j,iele(eleid))
+
+              !write(IMAIN,*) "test 2",myrank,eleid,i,j
+
+              is_iglob_overlap = .false.
+              ! find if the acceleration is already added to the iglob
+              ! this process is essentially only needed for once in the beginning, but
+              ! due to the readablility and not so efficient even if implementing subroutine
+              ! for the initialization of iglob_add_accel_smooth_idlist, we find it every time step.
+              ! iglob_add_accel_smooth_idlist (1,:) = iglob id
+              ! iglob_add_accel_smooth_idlist (2,:) = number of adding acceleration at the iglob
+
+              do k = 1, iadd
+                  !write(IMAIN,*) "test 2.1", myrank, iele(eleid)
+                  if (iglob_add_accel_smooth_idlist(1, k) .eq. iglob) then
+                      is_iglob_overlap = .true.
+                      iglob_add_accel_smooth_idlist(2, k) = iglob_add_accel_smooth_idlist(2, k) + 1
+                      !write(IMAIN,*) "test 2.3", myrank
+                      exit
+                  endif
+                  !write(IMAIN,*) "test 2.2", myrank
+              end do
+
+              !if (myrank==1) write(IMAIN,*) "test 3", myrank
+
+              if (.not. is_iglob_overlap) then
+                ! this iglob is first time to add
+                !if (myrank==1) write(IMAIN,*) "test 4", myrank
+
+
+                !write(IMAIN, *) accel_elastic(1,iglob) !, extsource(2,it,eleid)
+
+
+
+                !write(IMAIN, *) accel_elastic(2,iglob) !, extsource(3,it,eleid)
+                accel_elastic(1,iglob) = extsource(2,it,eleid)
+                accel_elastic(2,iglob) = extsource(3,it,eleid)
+                iadd = iadd + 1
+                !if (myrank==1) write(IMAIN,*) "test 5", myrank
+                iglob_add_accel_smooth_idlist(1, iadd) = iglob
+                iglob_add_accel_smooth_idlist(2, iadd) = 1
+                !if (myrank==1) write(IMAIN,*) "test 6", myrank
+
+              else
+                ! this iglob already has value: it will be averaged
+                !if (myrank==1) write(IMAIN,*) "test 7", myrank
+                accel_elastic(1,iglob) = accel_elastic(1,iglob) + extsource(2,it,eleid)
+                accel_elastic(2,iglob) = accel_elastic(2,iglob) + extsource(3,it,eleid)
+              endif
+
+              !write(IMAIN,*) "test 4"
+
+            enddo
+          enddo
+        else
+          ! SH (membrane) calculation
+          do j = 1,NGLLZ
+            do i = 1,NGLLX
+              iglob = ibool(i,j,iele(eleid))
+              is_iglob_overlap = .false.
+
+              do k = 1, iadd
+                  if (iglob_add_accel_smooth_idlist(1, k) .eq. iglob) then
+                      is_iglob_overlap = .true.
+                      iglob_add_accel_smooth_idlist(2, k) = iglob_add_accel_smooth_idlist(2, k) + 1
+                      exit
+                  endif
+              end do
+
+              if (.not. is_iglob_overlap) then
+                ! this iglob is first time to add
+                accel_elastic(1,iglob) = extsource(2,it,eleid)
+                iadd = iadd + 1
+                iglob_add_accel_smooth_idlist(1, iadd) = iglob
+                iglob_add_accel_smooth_idlist(2, iadd) = 1
+
+              else
+                ! this iglob already has value: it will be averaged
+                accel_elastic(1,iglob) = accel_elastic(1,iglob) + extsource(2,it,eleid)
+              endif
+
+            enddo
+          enddo
+        endif
+      endif
+    enddo
+
+    !if (myrank==1) write(IMAIN,*) "test sync", myrank
+
+    ! take an average based on the number of adding acceleration
+    do  k = 1,iadd
+      if (P_SV) then
+        !if (myrank==1) write(IMAIN,*) "test 9", myrank
+
+        !write(IMAIN,*) iglob_add_accel_smooth_idlist(1, k), iglob_add_accel_smooth_idlist(2, k)
+        accel_elastic(1,iglob_add_accel_smooth_idlist(1, k)) = &
+        accel_elastic(1,iglob_add_accel_smooth_idlist(1, k))/dble(iglob_add_accel_smooth_idlist(2, k))
+        accel_elastic(2,iglob_add_accel_smooth_idlist(1, k)) = &
+        accel_elastic(2,iglob_add_accel_smooth_idlist(1, k))/dble(iglob_add_accel_smooth_idlist(2, k))
+      else
+        accel_elastic(1,iglob_add_accel_smooth_idlist(1, k)) = &
+        accel_elastic(1,iglob_add_accel_smooth_idlist(1, k))/dble(iglob_add_accel_smooth_idlist(2, k))
+      endif
+    enddo
+
+    write(IMAIN, *) "total modified ele:", num_modified_ele
+    !if (myrank==1) write(IMAIN,*) "test 10", myrank
+  !endif
 
   end subroutine add_ext_source
 

@@ -11775,37 +11775,13 @@ div#notebook {
 </div>
 <div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<h1 id="SPECFEM2D-coupling-with-external-source-injection">SPECFEM2D coupling with external source injection<a class="anchor-link" href="#SPECFEM2D-coupling-with-external-source-injection">&#182;</a></h1><h3 id="November-11,-2019">November 11, 2019<a class="anchor-link" href="#November-11,-2019">&#182;</a></h3><h3 id="Kurama-Okubo-(https://github.com/kura-okubo)">Kurama Okubo (<a href="https://github.com/kura-okubo">https://github.com/kura-okubo</a>)<a class="anchor-link" href="#Kurama-Okubo-(https://github.com/kura-okubo)">&#182;</a></h3>
-</div>
-</div>
-</div>
-<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
-</div>
-<div class="inner_cell">
-<div class="text_cell_render border-box-sizing rendered_html">
-<h2 id="Motivation-of-the-coupling">Motivation of the coupling<a class="anchor-link" href="#Motivation-of-the-coupling">&#182;</a></h2><p><strong>Compute intermediate- or far-field radiation with high-resolved earthquake sources.</strong></p>
+<h1 id="SPECFEM2D-coupling-with-external-source-injection">SPECFEM2D coupling with external source injection<a class="anchor-link" href="#SPECFEM2D-coupling-with-external-source-injection">&#182;</a></h1><h3 id="November-11,-2019">November 11, 2019<a class="anchor-link" href="#November-11,-2019">&#182;</a></h3><h3 id="Kurama-Okubo-(https://github.com/kura-okubo)">Kurama Okubo (<a href="https://github.com/kura-okubo">https://github.com/kura-okubo</a>)<a class="anchor-link" href="#Kurama-Okubo-(https://github.com/kura-okubo)">&#182;</a></h3><h2 id="Motivation-of-the-coupling">Motivation of the coupling<a class="anchor-link" href="#Motivation-of-the-coupling">&#182;</a></h2><p><strong>Compute intermediate- or far-field radiation with high-resolved earthquake sources.</strong></p>
 <ul>
 <li>Complex fault geometry</li>
 <li>Multiple ruptures</li>
 <li>Coseismic off-fault damage</li>
 </ul>
-
-</div>
-</div>
-</div>
-<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
-</div>
-<div class="inner_cell">
-<div class="text_cell_render border-box-sizing rendered_html">
 <h2 id="Schematic-of-coupling">Schematic of coupling<a class="anchor-link" href="#Schematic-of-coupling">&#182;</a></h2><p><img src="./fig/schematic_of_coupling.png" alt="schematic" width="600"/></p>
-
-</div>
-</div>
-</div>
-<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
-</div>
-<div class="inner_cell">
-<div class="text_cell_render border-box-sizing rendered_html">
 <h1 id="Installation-of-SPECFEM2D">Installation of SPECFEM2D<a class="anchor-link" href="#Installation-of-SPECFEM2D">&#182;</a></h1><p>Please follow the <a href="https://github.com/geodynamics/specfem2d/blob/master/doc/USER_MANUAL/manual_SPECFEM2D.pdf">original document</a>.</p>
 <p>You can find the forked version of SPECFEM2D in (<a href="https://github.com/kura-okubo/specfem2d">https://github.com/kura-okubo/specfem2d</a>), which has additional subroutines and parameters for the coupling.</p>
 <p>Installation example:</p>
@@ -11815,14 +11791,6 @@ div#notebook {
 <span class="go">make</span>
 </pre></div>
 <p>Note: the original git log is removed in this forked version.</p>
-
-</div>
-</div>
-</div>
-<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
-</div>
-<div class="inner_cell">
-<div class="text_cell_render border-box-sizing rendered_html">
 <h2 id="Key-subroutines-&amp;-Parameters">Key subroutines &amp; Parameters<a class="anchor-link" href="#Key-subroutines-&amp;-Parameters">&#182;</a></h2><p>We developped new subroutines in <code>src/meshfem2D</code> and <code>src/specfem2D</code> and added parameters associated with coupling.
 Here we listed the parameters specified in <code>Par_fil</code> as below:</p>
 <table>
@@ -11878,50 +11846,18 @@ Here we listed the parameters specified in <code>Par_fil</code> as below:</p>
 <div class="text_cell_render border-box-sizing rendered_html">
 <h1 id="Example-1.-Validation-of-P-SV-full-space-coupling">Example 1. Validation of P-SV full-space coupling<a class="anchor-link" href="#Example-1.-Validation-of-P-SV-full-space-coupling">&#182;</a></h1><p>We first demonstrate how the coupling works through the example. We try to validate the coupling with comparing the far-field ground acceleration obtained by coupling to the point source model (i.e. canonical forward modeling) built in Specfem2D.</p>
 <p>The project directory is located at <code>EXAMPLES/Validation/FullSpace</code>. The workflow is:</p>
-<ol>
-<li>Turn on <code>COUPLING_IN = .true.</code> in <code>DATA/Par_file1</code> and Run <code>xmeshfem</code> by <code>sh run_xmeshfem2D.sh</code> at the <code>EXAMPLES/Validation/FullSpace</code> directory.</li>
-<li>Check <code>OUTPUT_FILES_grid/gridfile.ps</code> if the coupling elements (colored by red) form a closed surface. If not, play around <code>dR_ext</code> in <code>Par_file</code>. You can find the element id (used to get <code>iglob</code>), time step and location of coupling elements in  <code>OUTPUT_FILES_grid/externalsource.txt</code>, <strong>which is used later to make external source files.</strong></li>
-</ol>
+<h5 id="1.Turn-on-COUPLING_IN-=-.true.-in-DATA/Par_file1-.">1.Turn on <code>COUPLING_IN = .true.</code> in <code>DATA/Par_file1</code> .<a class="anchor-link" href="#1.Turn-on-COUPLING_IN-=-.true.-in-DATA/Par_file1-.">&#182;</a></h5><p>Then, run <code>xmeshfem</code> by <code>sh run_xmeshfem2D.sh</code> at the <code>EXAMPLES/Validation/FullSpace</code> directory.</p>
+<h5 id="2.Check-OUTPUT_FILES_grid/gridfile.ps-if-the-coupling-elements-(colored-by-red)-form-a-closed-surface.">2.Check <code>OUTPUT_FILES_grid/gridfile.ps</code> if the coupling elements (colored by red) form a closed surface.<a class="anchor-link" href="#2.Check-OUTPUT_FILES_grid/gridfile.ps-if-the-coupling-elements-(colored-by-red)-form-a-closed-surface.">&#182;</a></h5><p>If not, play around <code>dR_ext</code> in <code>Par_file</code>. You can find the element id (used to get <code>iglob</code>), time step and location of coupling elements in  <code>OUTPUT_FILES_grid/externalsource.txt</code>, <strong>which is used later to make external source files.</strong></p>
 <p><img src="./fig/gridfile.png" alt="schematic" width="800"/>
 Figure: gridfile.ps shows the coupling elements. Check if they form a closed surface as shown in the figure above.</p>
+<h5 id="3.Set-receivers-in-DATA/STATIONS.">3.Set receivers in <code>DATA/STATIONS</code>.<a class="anchor-link" href="#3.Set-receivers-in-DATA/STATIONS.">&#182;</a></h5><p>To compute the external sources at coupling elements for validation, we put receivers on the coupling elements and in far-field region. Please run <code>make_extsource/make_stationfile_at_extsource.py</code> (it requires <a href="https://pandas.pydata.org">pandas</a>).</p>
+<h5 id="4.Run-point-source-model-as-true-model-for-validation.">4.Run point source model as true model for validation.<a class="anchor-link" href="#4.Run-point-source-model-as-true-model-for-validation.">&#182;</a></h5>
+<pre><code>- specify source type (e.g. moment tensor) and **set `factor` to be non-zero (e.g. 1.0d10) ** in `DATA/SOURCE`.
+- set `COUPLING_IN = .false.` and run by `sh run_validation_pointsource.sh`.
 
-</div>
-</div>
-</div>
-<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
-</div>
-<div class="inner_cell">
-<div class="text_cell_render border-box-sizing rendered_html">
-<ol>
-<li>Set receivers in <code>DATA/STATIONS</code>. To compute the external sources at coupling elements for validation, we put receivers on the coupling elements and in far-field region. Please run <code>make_extsource/make_stationfile_at_extsource.py</code> (it requires <a href="https://pandas.pydata.org">pandas</a>).</li>
-</ol>
 
-</div>
-</div>
-</div>
-<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
-</div>
-<div class="inner_cell">
-<div class="text_cell_render border-box-sizing rendered_html">
-<ol>
-<li>Run point source model as true model for validation.<ul>
-<li>specify source type (e.g. moment tensor) and <strong>set <code>factor</code> to be non-zero (e.g. 1.0d10) </strong> in <code>DATA/SOURCE</code>.</li>
-<li>set <code>COUPLING_IN = .false.</code> and run by <code>sh run_validation_pointsource.sh</code>.</li>
-</ul>
-</li>
-</ol>
-
-</div>
-</div>
-</div>
-<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
-</div>
-<div class="inner_cell">
-<div class="text_cell_render border-box-sizing rendered_html">
-<ol>
-<li><strong>Make External source file</strong></li>
-</ol>
-<p>This process is important for coupling. We need to prepare the external timeseries of acceleration with correctly named files. Time step in the external timeseries has to be same with <code>DT</code> in <code>Par_file</code> (i.e. same with specfem2D forward calculation). In this validation, we create the external source files from the result of point source model at process 4 above. Run <code>make_extsource/make_externalsourcefile.py</code></p>
+</code></pre>
+<h5 id="5.Make-External-source-file">5.<strong>Make External source file</strong><a class="anchor-link" href="#5.Make-External-source-file">&#182;</a></h5><p>This process is important for coupling. We need to prepare the external timeseries of acceleration with correctly named files. Time step in the external timeseries has to be same with <code>DT</code> in <code>Par_file</code> (i.e. same with specfem2D forward calculation). In this validation, we create the external source files from the result of point source model at process 4 above. Run <code>make_extsource/make_externalsourcefile.py</code></p>
 <p>File format is following:</p>
 
 <pre><code>- filename is `FullSpace/extsource/EXT********.dat` (XXXXXXXX is the element id in `OUTPUT_FILES_grid/externalsource.txt` with zero padding). 
@@ -11930,59 +11866,17 @@ Figure: gridfile.ps shows the coupling elements. Check if they form a closed sur
 </code></pre>
 <p>Note: file name and directory are fixed in the source code, so please follow the format above.</p>
 <p><strong>Practically, this part is done using external softwares (e.g. HOSSedu) to compute dynamic earthquake rupture and near-field radiation.</strong></p>
+<h5 id="6.Run-coupling-source.">6.Run coupling source.<a class="anchor-link" href="#6.Run-coupling-source.">&#182;</a></h5>
+<pre><code>- turn off built-in source by `factor = 0.0 #1.0d10` in `DATA/SOURCE`.
+- set `COUPLING_IN = .true.`
+**! Note ! Don't change the element size and other coupling parameters (e.g. R_ext) otherwise the element id is not synchronized at the coupling elements.**
 
-</div>
-</div>
-</div>
-<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
-</div>
-<div class="inner_cell">
-<div class="text_cell_render border-box-sizing rendered_html">
-<ol>
-<li>Run coupling source.<ul>
-<li>turn off built-in source by <code>factor = 0.0 #1.0d10</code> in <code>DATA/SOURCE</code>.</li>
-<li>set <code>COUPLING_IN = .true.</code>
-<strong>! Note ! Don't change the element size and other coupling parameters (e.g. R_ext) otherwise the element id is not synchronized at the coupling elements.</strong></li>
-</ul>
-</li>
-</ol>
-<p>run it by <code>sh run_validation_extcouple.sh</code></p>
-
-</div>
-</div>
-</div>
-<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
-</div>
-<div class="inner_cell">
-<div class="text_cell_render border-box-sizing rendered_html">
-<h2 id="Result">Result<a class="anchor-link" href="#Result">&#182;</a></h2>
-</div>
-</div>
-</div>
-<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
-</div>
-<div class="inner_cell">
-<div class="text_cell_render border-box-sizing rendered_html">
-<h3 id="Source-time-function">Source time function<a class="anchor-link" href="#Source-time-function">&#182;</a></h3><p><img src="./fig/STF_fullspace.png" alt="STF_fullspace" width="400"/></p>
-
-</div>
-</div>
-</div>
-<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
-</div>
-<div class="inner_cell">
-<div class="text_cell_render border-box-sizing rendered_html">
+</code></pre>
+<p>Run it by <code>sh run_validation_extcouple.sh</code></p>
+<h2 id="Result">Result<a class="anchor-link" href="#Result">&#182;</a></h2><h3 id="Source-time-function">Source time function<a class="anchor-link" href="#Source-time-function">&#182;</a></h3><p><img src="./fig/STF_fullspace.png" alt="STF_fullspace" width="400"/></p>
 <h3 id="Wave-field">Wave field<a class="anchor-link" href="#Wave-field">&#182;</a></h3><p><img src="./fig/result_fullspace_snapshots.png" alt="STF_fullspace" width="800"/>
 Color contour shows the vertical velocity, Vz. As shown in the last snapshot of coupling model, the injected wave is trapped within the source region. However, it does not affect the far-field radiation as long as the coupling elements form a closed surface.</p>
-
-</div>
-</div>
-</div>
-<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
-</div>
-<div class="inner_cell">
-<div class="text_cell_render border-box-sizing rendered_html">
-<h3 id="Far-field-accelerations">Far-field accelerations<a class="anchor-link" href="#Far-field-accelerations">&#182;</a></h3><p>run <code>plot_result/plot_waveform_comparison.py</code>.
+<h3 id="Far-field-accelerations">Far-field accelerations<a class="anchor-link" href="#Far-field-accelerations">&#182;</a></h3><p>Run <code>plot_result/plot_waveform_comparison.py</code>.
 <img src="./fig/validation_full.png" alt="validation_full" width="800"/>
 Figure: Comparison of far-field accelerations recoded at the stations indicated in the figure above. To remove numerical high-frequency oscillations, low-pass filter is applied on both cases. It has a good agreement between point source model and coupling model, showing the coupling with external sources works well.</p>
 
@@ -11993,15 +11887,7 @@ Figure: Comparison of far-field accelerations recoded at the stations indicated 
 </div>
 <div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<h1 id="Example-2.-Validation-of-P-SV-half-space-coupling">Example 2. Validation of P-SV half-space coupling<a class="anchor-link" href="#Example-2.-Validation-of-P-SV-half-space-coupling">&#182;</a></h1>
-</div>
-</div>
-</div>
-<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
-</div>
-<div class="inner_cell">
-<div class="text_cell_render border-box-sizing rendered_html">
-<p>We next validate the coupling with half-space model. 
+<h1 id="Example-2.-Validation-of-P-SV-half-space-coupling">Example 2. Validation of P-SV half-space coupling<a class="anchor-link" href="#Example-2.-Validation-of-P-SV-half-space-coupling">&#182;</a></h1><p>We next validate the coupling with half-space model. 
 The project directory is located at <code>EXAMPLES/Validation/HalfSpace</code>. We follow the same workflow as Example 1, and here we show the results of validation.</p>
 <p>Source time function is Gaussian shape as Example 1.</p>
 <h4 id="computational-note">computational note<a class="anchor-link" href="#computational-note">&#182;</a></h4>
@@ -12010,25 +11896,11 @@ The project directory is located at <code>EXAMPLES/Validation/HalfSpace</code>. 
 - time step: 0.007 (s)
 - Number of step: 7000
 - number of coupling element: 510
-- Computational time : ~ 15 min (single processor)</code></pre>
+- Computational time : ~ 15 min (single processor)
 
-</div>
-</div>
-</div>
-<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
-</div>
-<div class="inner_cell">
-<div class="text_cell_render border-box-sizing rendered_html">
+</code></pre>
 <h3 id="Wave-field">Wave field<a class="anchor-link" href="#Wave-field">&#182;</a></h3><p><img src="./fig/result_halfspace_snapshots.png" alt="STF_fullspace" width="900"/></p>
 <p>Figrue: snapshots of vertical velocity, Vz. Top boundary condition is free-surface, while the bottom and sides are PML absorbing boundaries.</p>
-
-</div>
-</div>
-</div>
-<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
-</div>
-<div class="inner_cell">
-<div class="text_cell_render border-box-sizing rendered_html">
 <h3 id="Far-field-accelerations">Far-field accelerations<a class="anchor-link" href="#Far-field-accelerations">&#182;</a></h3><p><img src="./fig/validation_half.png" alt="validation_half" width="800"/></p>
 
 </div>
@@ -12040,24 +11912,8 @@ The project directory is located at <code>EXAMPLES/Validation/HalfSpace</code>. 
 <div class="text_cell_render border-box-sizing rendered_html">
 <h1 id="Conclusion">Conclusion<a class="anchor-link" href="#Conclusion">&#182;</a></h1><p><strong>SPECFEM2D coupling is ready to couple with external softwares.</strong></p>
 <p>We may need grid convergence analysis as there is a small error in amplitude and phase associated with coupling model.</p>
-
-</div>
-</div>
-</div>
-<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
-</div>
-<div class="inner_cell">
-<div class="text_cell_render border-box-sizing rendered_html">
 <h1 id="Acknowledgments">Acknowledgments<a class="anchor-link" href="#Acknowledgments">&#182;</a></h1><p>We acknowledge the SPECFEM2D package (<a href="https://geodynamics.org/cig/software/specfem2d/">https://geodynamics.org/cig/software/specfem2d/</a>) available at <a href="https://geodynamics.org/cig/">Computational Infrastructure for Geodynamics (CIG)</a>.</p>
-<h2 id="References">References<a class="anchor-link" href="#References">&#182;</a></h2>
-</div>
-</div>
-</div>
-<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
-</div>
-<div class="inner_cell">
-<div class="text_cell_render border-box-sizing rendered_html">
-<ul>
+<h2 id="References">References<a class="anchor-link" href="#References">&#182;</a></h2><ul>
 <li><p>Tromp, J., Komatitsch, D., and Liu, Q. (2008), Spectral-element and adjoint methods in seismology, Communications in Computational Physics, 3, 1, 1-32.</p>
 </li>
 <li><p>Xie, Z., Komatitsch, D., Martin, R., and Matzen, R. (2014), Improved forward wave propagation and adjoint-based sensitivity kernel calculations using a numerically stable finite-element PML, Geophys. J. Int., 198, 3, 1714-1747, doi:10.1093/gji/ggu219.</p>

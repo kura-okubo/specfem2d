@@ -153,6 +153,7 @@
   integer  :: num_glob, num_part
   integer, dimension(0:nparts-1)  :: num_loc
 
+  write(*,*) "nparts: ", nparts
 
   allocate(glob2loc_elmnts(0:nelmnts-1))
 
@@ -162,9 +163,12 @@
   enddo
 
   ! local numbering
+  write(*,*) "nelmnts: ", nelmnts
+
   do num_glob = 0, nelmnts-1
     num_part = part(num_glob)
     glob2loc_elmnts(num_glob) = num_loc(num_part)
+    write(*,*) "glob2loc_elmnts(", num_glob,") = ", glob2loc_elmnts(num_glob)
     num_loc(num_part) = num_loc(num_part) + 1
   enddo
 

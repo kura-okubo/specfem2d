@@ -17,7 +17,7 @@ NOISE_TOMOGRAPHY                = 0
 SAVE_FORWARD                    = .false.
 
 # parameters concerning partitioning
-NPROC                           = 4              # number of processes
+NPROC                           = 2              # number of processes
 partitioning_method             = 3              # SCOTCH = 3, ascending order (very bad idea) = 1
 
 # number of control nodes per element (4 or 9)
@@ -25,7 +25,7 @@ ngnod                           = 4
 
 # time step parameters
 # total number of time steps
-NSTEP                           = 7000
+NSTEP                           = 5000
 # duration of a time step (see section "How to choose the time step" of the manual for how to do this)
 DT                              = 7.d-3
 
@@ -118,7 +118,7 @@ ACOUSTIC_FORCING                = .false.        # acoustic forcing of an acoust
 COUPLING_IN                     = .true.         # please define dummy number below even if this is false
 extori_x                        = 0.0d0            # x origin of coupling source region
 extori_z                        = 0.0d0       # z origin of coupling source region
-R_ext                           = 20000.0       # Radius of coupling source elements: Need to compute source within this radius by the other numerical software
+R_ext                           = 5000.0       # Radius of coupling source elements: Need to compute source within this radius by the other numerical software
 dR_ext                          = 250.0        # Threshold of diference in distance (R-norm(cx, cz)) to detect source element: normally dx/2 works
 
 #-----------------------------------------------------------------------------
@@ -263,20 +263,20 @@ tangential_detection_curve_file = ./DATA/courbe_eros_nodes  # file containing th
 interfacesfile                  = interfaces_elastic.dat
 
 # geometry of the model (origin lower-left corner = 0,0) and mesh description
-xmin                            = -50.d3           # abscissa of left side of the model
-xmax                            = 50.d3        # abscissa of right side of the model
-nx                              = 400           # number of elements along X
+xmin                            = -25.d3           # abscissa of left side of the model
+xmax                            = 25.d3        # abscissa of right side of the model
+nx                              = 200           # number of elements along X
 
 # absorbing boundary parameters (see absorbing_conditions above)
 absorbbottom                    = .true.
 absorbright                     = .true.
-absorbtop                       = .false.
+absorbtop                       = .true.
 absorbleft                      = .true.
 
 # define the different regions of the model in the (nx,nz) spectral-element mesh
 nbregions                       = 1              # then set below the different regions and model number for each region
 # format of each line: nxmin nxmax nzmin nzmax material_number
-1 400 1 200 1
+1 200 1 200 1
 
 #-----------------------------------------------------------------------------
 #

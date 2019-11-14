@@ -368,6 +368,10 @@
   ! sets up global mesh numbering and mesh properties
   call setup_mesh()
 
+  !!! DEBUG
+  STOP 1
+
+
   ! defines actual location of source and receivers
   call setup_sources_receivers()
 

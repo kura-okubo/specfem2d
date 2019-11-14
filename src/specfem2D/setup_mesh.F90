@@ -120,6 +120,7 @@
   call sum_all_i(nspec,nspec_total)
   call sum_all_i(nglob,nglob_total)
 
+
   if (myrank == 0) then
     write(IMAIN,*) 'Mesh numbering:'
     write(IMAIN,*) '  Total number of elements: ',nspec_total
