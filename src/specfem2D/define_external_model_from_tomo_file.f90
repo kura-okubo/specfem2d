@@ -329,6 +329,7 @@ end module interpolation
 
   integer :: i,j,ispec,iglob
   double precision :: xmesh,zmesh
+  double precision :: minx, maxx, miny, maxy
 
   ! user output
   if (myrank == 0) then
@@ -365,9 +366,23 @@ end module interpolation
           xmesh = coord(1,iglob)
           zmesh = coord(2,iglob)
 
+          !---debug kurama---!
+
+          write(IMAIN,*) 'xmesh, zmesh', xmesh, zmesh
+
+          minx = minval(x_tomo)
+          maxx = maxval(x_tomo)
+          miny = minval(z_tomo)
+          maxy = maxval(z_tomo)
+          write(IMAIN,*) 'minx, maxx, miny, maxy:', minx, maxx, miny, maxy
+          !------------------!
+
           rhoext(i,j,ispec) = interpolate(NX, x_tomo, NZ, z_tomo, rho_tomo, xmesh, zmesh,TINYVAL)
           vpext(i,j,ispec) = interpolate(NX, x_tomo, NZ, z_tomo, vp_tomo, xmesh, zmesh,TINYVAL)
           vsext(i,j,ispec) = interpolate(NX, x_tomo, NZ, z_tomo, vs_tomo, xmesh, zmesh,TINYVAL)
+
+
+          write(IMAIN,*) 'vpext:' ,i ,j , vpext(i,j,ispec)
 
           !! ABAB : The 3 following lines are important, otherwise PMLs won't work. TODO check that
           !! (we assign these values several times: indeed for each kmato(ispec) it can exist a lot of rhoext(i,j,ispec) )
@@ -536,6 +551,9 @@ end module interpolation
     read(string_read,*) x_tomography(irecord+1),z_tomography(irecord+1), &
                         vp_tomography(irecord+1),vs_tomography(irecord+1),rho_tomography(irecord+1)
 
+    !write(IMAIN,*) x_tomography(irecord+1),z_tomography(irecord+1), &
+    !                    vp_tomography(irecord+1),vs_tomography(irecord+1),rho_tomography(irecord+1)
+
     if (irecord < NX) x_tomo(irecord+1) = x_tomography(irecord+1)
 
     irecord = irecord + 1
@@ -611,4 +629,3 @@ end module interpolation
   string_read = string_read(1:len_trim(string_read))
 
   end subroutine tomo_read_next_line
-

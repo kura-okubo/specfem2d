@@ -37,15 +37,14 @@
 
     ! reads in time series based on external source files
     use constants, only: IMAIN, OUTPUT_FILES, EXT_SOURCE_NUM_MAX, MAX_STRING_LEN
-    use specfem_par, only: myrank, NSTEP
+    use specfem_par, only: myrank
     use shared_parameters, only: iele, number_of_extsource, NPROC
 
     implicit none
 
     ! local parameters
-    integer :: i, j, tid
+    integer :: i, j
     integer :: ier
-    double precision :: t_temp, ax_temp, az_temp
     character(len=MAX_STRING_LEN):: line
     integer, dimension(1) :: ibuf_num
 
@@ -82,7 +81,6 @@
       write(IMAIN,*) '*****************************************************'
       write(IMAIN,*)
       write(IMAIN,*) '*** Number of external source = ',number_of_extsource
-      write(IMAIN,*) '*** Time series length of external source = ',tid
       write(IMAIN,*)
     endif
 
@@ -113,7 +111,7 @@
   ! inject the "source" from external source files
   use constants, only: CUSTOM_REAL, IMAIN, NDIM, EXT_SOURCE_NUM_MAX, EXT_SOURCE_TRACE_MAX, &
                       NGLLX,NGLLZ
-  use specfem_par, only: nglob, P_SV, it, ibool, NSTEP, deltat, myrank, nspec,&
+  use specfem_par, only: nglob, P_SV, it, ibool, NSTEP, deltat, nspec,&
                     nspec_inner_elastic,nspec_outer_elastic,phase_ispec_inner_elastic, &
                     glob2loc_table
 
@@ -156,37 +154,12 @@
   !timeval = (it-1) * deltat
   iadd = 0
   ioverlap = 0
-  !
-  ! do eleid = 1, number_of_extsource
-  !   write(IMAIN, *) iele(eleid)
-  ! enddo
-  num_modified_ele = 0
 
-  !write(IMAIN, *) " myrank, iphase, number_of_extsource: ", myrank, iphase, number_of_extsource
-  !
-  ! write(IMAIN, *) "#my rank = 0 -----------------------------#"
-  ! if (myrank == 0) then
-  !   do i = 1, 40000
-  !     write(IMAIN, *) glob2loc_table(i, 1), glob2loc_table(i, 2), glob2loc_table(i, 3)
-  !   enddo
-  ! endif
-  !
+  num_modified_ele = 0
 
   if (it == 1) call setup_glob2loctable()
 
-  ! if (myrank == 1) then
-  ! write(IMAIN, *) "#my rank = 1 -----------------------------#"
-  !
-  !   do i = 1, nspec
-  !     write(IMAIN, *) glob2loc_table(i, 1), glob2loc_table(i, 2), glob2loc_table(i, 3)
-  !   enddo
-  ! endif
-
-  !do iphase = 1, 2
   do iphase = 1, 2
-    write(IMAIN, *) "test000"
-
-    !write(IMAIN,*) "test -1", myrank
 
     ! choses inner/outer elements
     if (iphase == 1) then
@@ -202,24 +175,8 @@
       iphase_elelist(ispec_p) = phase_ispec_inner_elastic(ispec_p,iphase)
     enddo
 
-    write(IMAIN, *) "myrank, number_of_extsource: ", myrank, number_of_extsource
-
     do eleid = 1, number_of_extsource
 
-      ! check if iele(eleid) is in the ispec_plist
-      ! is_ispec_in = .false.
-      ! do ispec_p = 1,num_elements
-      !   if (iele(eleid) == phase_ispec_inner_elastic(ispec_p,iphase)) then
-      !     is_ispec_in = .true.
-      !     write(IMAIN, *) "myrank, iphase, modifiediele: ", myrank, iphase, iele(eleid)
-      !     exit
-      !   endif
-      ! enddo
-
-      ! if (is_ispec_in) then
-      !write(IMAIN, *) iele(eleid)
-
-      ! find local element id in each MPI domain from glob2loc_table
       is_ispec_in = .false.
 
       do i = 1, nspec
@@ -235,15 +192,11 @@
                 call read_ext_source(extsource, eleid, iele(eleid))
                 write(IMAIN, *) "EXT", iele(eleid), ".dat is read."
               endif
-              !write(IMAIN, *) extsource(2, 500:600, eleid)
-              !write(*,*) loc_rank, loc_eleid
               exit
             endif
           enddo
         endif
       enddo
-
-       !write(IMAIN,*) "test 0", myrank
 
       if (is_ispec_in) then
         if (P_SV) then
@@ -251,13 +204,7 @@
           do j = 1,NGLLZ
             do i = 1,NGLLX
 
-              ! write(IMAIN,*) "test 1", myrank
-
               iglob = ibool(i,j,loc_eleid)
-
-               !write(IMAIN,*) "test 2", myrank
-
-              !write(IMAIN,*) "test 2",myrank,eleid,i,j
 
               is_iglob_overlap = .false.
               ! find if the acceleration is already added to the iglob
@@ -278,45 +225,21 @@
                   endif
                   !write(IMAIN,*) "test 2.2", myrank
               end do
-               !write(IMAIN,*) "test 4", myrank
-
-              ! write(IMAIN,*) "test 3", myrank
 
               if (.not. is_iglob_overlap) then
                 ! this iglob is first time to add
 
-
-                !write(IMAIN, *) accel_elastic(1,iglob) !, extsource(2,it,eleid)
-
-
-
-                !write(IMAIN, *) accel_elastic(2,iglob) !, extsource(3,it,eleid)
-                 !write(IMAIN,*) "test 5", myrank
                 accel_elastic(1,iglob) = extsource(2,it,eleid)
-                 !write(IMAIN,*) "test 6", myrank
-
                 accel_elastic(2,iglob) = extsource(3,it,eleid)
                 iadd = iadd + 1
-                ! write(IMAIN,*) "test 5", myrank
                 iglob_add_accel_smooth_idlist(1, iadd) = iglob
                 iglob_add_accel_smooth_idlist(2, iadd) = 1
-                ! write(IMAIN,*) "test 6", myrank
 
               else
                 ! this iglob already has value: it will be averaged
-                ! write(IMAIN,*) "test 7", myrank
-                 !write(IMAIN,*) "test 7", myrank
-
                 accel_elastic(1,iglob) = accel_elastic(1,iglob) + extsource(2,it,eleid)
-                 !write(IMAIN,*) "test 8", myrank
-
                 accel_elastic(2,iglob) = accel_elastic(2,iglob) + extsource(3,it,eleid)
-                 !write(IMAIN,*) "test 9", myrank
-
               endif
-
-              !write(IMAIN,*) "test 4"
-
             enddo
           enddo
         else
@@ -352,35 +275,22 @@
       endif
     enddo
 
-    ! write(IMAIN,*) "test sync", myrank
-     !write(IMAIN,*) "test 10", myrank
-
     ! take an average based on the number of adding acceleration
-    ! do  k = 1,iadd
-    !   if (P_SV) then
-    !     ! write(IMAIN,*) "test 9", myrank
-    !      !write(IMAIN,*) "test 11", myrank
-    !
-    !     !write(IMAIN,*) iglob_add_accel_smooth_idlist(1, k), iglob_add_accel_smooth_idlist(2, k)
-    !     accel_elastic(1,iglob_add_accel_smooth_idlist(1, k)) = &
-    !     accel_elastic(1,iglob_add_accel_smooth_idlist(1, k))/dble(iglob_add_accel_smooth_idlist(2, k))
-    !     accel_elastic(2,iglob_add_accel_smooth_idlist(1, k)) = &
-    !     accel_elastic(2,iglob_add_accel_smooth_idlist(1, k))/dble(iglob_add_accel_smooth_idlist(2, k))
-    !      !write(IMAIN,*) "test 12", myrank
-    !
-    !   else
-    !     accel_elastic(1,iglob_add_accel_smooth_idlist(1, k)) = &
-    !     accel_elastic(1,iglob_add_accel_smooth_idlist(1, k))/dble(iglob_add_accel_smooth_idlist(2, k))
-    !   endif
-    ! enddo
-
-    !write(IMAIN,*) "test 13", myrank
+    do  k = 1,iadd
+      if (P_SV) then
+        accel_elastic(1,iglob_add_accel_smooth_idlist(1, k)) = &
+        accel_elastic(1,iglob_add_accel_smooth_idlist(1, k))/dble(iglob_add_accel_smooth_idlist(2, k))
+        accel_elastic(2,iglob_add_accel_smooth_idlist(1, k)) = &
+        accel_elastic(2,iglob_add_accel_smooth_idlist(1, k))/dble(iglob_add_accel_smooth_idlist(2, k))
+      else
+        accel_elastic(1,iglob_add_accel_smooth_idlist(1, k)) = &
+        accel_elastic(1,iglob_add_accel_smooth_idlist(1, k))/dble(iglob_add_accel_smooth_idlist(2, k))
+      endif
+    enddo
 
     deallocate(iphase_elelist)
 
   enddo ! end do iphase
-  !write(IMAIN, *) "myrank :", myrank," total modified ele:", num_modified_ele
-  !  write(IMAIN,*) "test 10", myrank
 
   end subroutine add_ext_source
 
@@ -398,7 +308,6 @@
     double precision, dimension(3,EXT_SOURCE_TRACE_MAX,EXT_SOURCE_NUM_MAX), intent(inout) :: extsource
     integer :: tid, ier
     double precision :: t_temp, ax_temp, az_temp
-    character(len=200):: line
     character(len=200):: source_timeseries_name
 
     ! read external source element
@@ -453,15 +362,12 @@
     ! read glob2loctable for acceleration injection at coupling elements
     use constants, only: IMAIN, IIN, OUTPUT_FILES, MAX_STRING_LEN
     use specfem_par, only: myrank, glob2loc_table, nspec
-    use shared_input_parameters, only: NPROC
 
     implicit none
 
     integer :: i, ier
-    integer, dimension(:, :), allocatable :: glob2loc_table_root
     character(len=MAX_STRING_LEN) :: prname
 
-    !if (myrank==0) then
     allocate(glob2loc_table(nspec, 3))
 
     write(prname,"(a,i5.5,a)") trim(OUTPUT_FILES)//'glob2loc_table',myrank,'.bin'
@@ -470,58 +376,9 @@
 
 
     do i = 1, nspec
-      write(IMAIN, *) myrank
-
-      ! read(IIN) glob2loc_table_root(i, 1), glob2loc_table_root(i, 2), glob2loc_table_root(i, 3)
-      ! call bcast_all_i(glob2loc_table_root(i, 1))
-      ! call bcast_all_i(glob2loc_table_root(i, 2))
-      ! call bcast_all_i(glob2loc_table_root(i, 3))
-
       read(IIN) glob2loc_table(i, 1), glob2loc_table(i, 2), glob2loc_table(i, 3)
-      !write(IMAIN, *) glob2loc_table(i, 1), glob2loc_table(i, 2), glob2loc_table(i, 3)
     enddo
 
-      !   ! call bcast_all_singlei(gl1)
-      !   ! call bcast_all_singlei(gl2)
-      !   ! call bcast_all_singlei(gl3)
-      !   call MPI_BCAST(gl1,1,MPI_INTEGER,0,my_local_mpi_comm_world,ier)
-      !   call MPI_BCAST(gl1,2,MPI_INTEGER,0,my_local_mpi_comm_world,ier)
-      !   call MPI_BCAST(gl1,3,MPI_INTEGER,0,my_local_mpi_comm_world,ier)
-      !
-      !   !write(IMAIN,*) glob2loc_table(i, 1), glob2loc_table(i, 2), glob2loc_table(i, 3)
-      !   write(IMAIN, *) "test 1"
-      !   write(IMAIN, *) gl1, gl2, gl3
-      !   call send_singlei(dummy, 1, i)
-      ! else
-      !   write(IMAIN, *) "test 2"
-      !   write(IMAIN, *) "myrank is:", myrank
-      !   write(IMAIN, *) "NPROC is:", NPROC
-      !
-      !   call recv_singlei(dummy, myrank-1, i)
-      !   if (myrank < NPROC-1) call send_singlei(1, myrank+1, 1)
-      ! endif
-      !
-      ! write(IMAIN, *) "test 3"
-      !
-      ! glob2loc_table(i, 1) = gl1
-      ! glob2loc_table(i, 2) = gl2
-      ! glob2loc_table(i, 3) = gl3
-      !
-      !  write(IMAIN, *) gl1, gl2, gl3
-
-    ! enddo
-    ! !call synchronize_all()
-    !
-    ! do i = 1, nspec_total
-    !
-    !
-    !    write(IMAIN, *) gl1, gl2, gl3
-    !   ! glob2loc_table(i, 1) = glob2loc_table_root(i, 1)
-    !   ! glob2loc_table(i, 2) = glob2loc_table_root(i, 2)
-    !   ! glob2loc_table(i, 3) = glob2loc_table_root(i, 3)
-    ! enddo
     close(IIN)
-
-    ! if (myrank == 0) close(IIN)
 
   end subroutine setup_glob2loctable

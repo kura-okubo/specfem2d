@@ -156,7 +156,7 @@
   integer, dimension(0:nparts-1)  :: num_loc
 
   ! for glob2loc_eleid table
-  integer :: ier, ele_count
+  integer :: ier
   character(len=MAX_STRING_LEN) :: prname
 
   allocate(glob2loc_elmnts(0:nelmnts-1))
@@ -173,7 +173,6 @@
   enddo
 
   ! local numbering
-  write(*,*) "nelmnts: ", nelmnts
 
   do num_glob = 0, nelmnts-1
     num_part = part(num_glob)
@@ -189,7 +188,7 @@
         ! write(*,*) "#=====================#"
         ! write(*,*) "num_part: ", num_part
         ! write(*,*) "#=====================#"
-        write(*,*) "id_glob, rank, loc_id: ", num_glob+1, num_part, glob2loc_elmnts(num_glob) + 1
+        ! write(*,*) "id_glob, rank, loc_id: ", num_glob+1, num_part, glob2loc_elmnts(num_glob) + 1
         ! opens Database file
         write(IOUT+num_part) num_glob+1,  num_part, glob2loc_elmnts(num_glob) + 1
 
@@ -209,8 +208,47 @@
   write(*,*) "num_loc(1)",  num_loc(1)
 
 
-
   end subroutine construct_glob2loc_elmnts
+
+
+  !
+  !---------------------------------------------------------------------------------------
+  !
+  !
+  ! !--------------------------------------------------
+  ! ! construct local numbering for the elements in each partition
+  ! !--------------------------------------------------
+  ! subroutine construct_glob2loc_elmnts(nparts)
+  !
+  ! use part_unstruct_par, only: glob2loc_elmnts,nelmnts,part
+  !
+  ! implicit none
+  ! integer, intent(in)  :: nparts
+  !
+  ! integer  :: num_glob, num_part
+  ! integer, dimension(0:nparts-1)  :: num_loc
+  !
+  !
+  ! allocate(glob2loc_elmnts(0:nelmnts-1))
+  !
+  ! ! initializes number of local elements per partition
+  ! do num_part = 0, nparts-1
+  !   num_loc(num_part) = 0
+  ! enddo
+  !
+  ! ! local numbering
+  ! do num_glob = 0, nelmnts-1
+  !   num_part = part(num_glob)
+  !   glob2loc_elmnts(num_glob) = num_loc(num_part)
+  !   num_loc(num_part) = num_loc(num_part) + 1
+  ! enddo
+  !
+  ! end subroutine construct_glob2loc_elmnts
+  !
+  ! !
+  ! !---------------------------------------------------------------------------------------
+  ! !
+  !
 
 !
 !---------------------------------------------------------------------------------------
@@ -288,6 +326,7 @@
   enddo
 
   end subroutine construct_glob2loc_nodes
+
 
 !
 !---------------------------------------------------------------------------------------

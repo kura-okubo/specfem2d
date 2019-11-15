@@ -37,6 +37,7 @@
 
   use constants, only: IMAIN
   use specfem_par
+  use shared_parameters, only: COUPLING_IN
 
   implicit none
 

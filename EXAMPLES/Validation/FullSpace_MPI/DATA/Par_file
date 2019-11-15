@@ -114,8 +114,8 @@ add_Bielak_conditions_left      = .false.
 # acoustic forcing
 ACOUSTIC_FORCING                = .false.        # acoustic forcing of an acoustic medium with a rigid interface
 
-# coupling with HOSS
-COUPLING_IN                     = .false.         # please define dummy number below even if this is false
+# ing with HOSS
+COUPLING_IN                     = .true.         # please define dummy number below even if this is false
 extori_x                        = 0.0d0            # x origin of coupling source region
 extori_z                        = 0.0d0       # z origin of coupling source region
 R_ext                           = 5000.0       # Radius of coupling source elements: Need to compute source within this radius by the other numerical software
@@ -310,7 +310,7 @@ COMPUTE_INTEGRATED_ENERGY_FIELD = .false.
 
 # every how many time steps we draw JPEG or PostScript pictures of the simulation
 # and/or we dump results of the simulation as ASCII or binary files (costly, do not use a very small value)
-NSTEP_BETWEEN_OUTPUT_IMAGES     = 50
+NSTEP_BETWEEN_OUTPUT_IMAGES     = 500
 
 # minimum amplitude kept in % for the JPEG and PostScript snapshots; amplitudes below that are muted
 cutsnaps                        = 1.

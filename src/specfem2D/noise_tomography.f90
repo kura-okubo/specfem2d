@@ -461,15 +461,11 @@
   !local
   integer :: ier, i, j, ispec, iglob
 
-  write(*,*) "test NOISE_TOMOGRAPHY 1", NOISE_TOMOGRAPHY
-
   ! checks if anything to do
   if (NOISE_TOMOGRAPHY /= 2 .and. NOISE_TOMOGRAPHY /= 3) return
 
   ! checks if reconstruction by file storage
   if (NOISE_TOMOGRAPHY == 3 .and. NOISE_SAVE_EVERYWHERE) return
-
-  write(*,*) "test step b:", it
 
   ! opens noise source file
   if (it == 1) then
@@ -539,8 +535,6 @@
   integer :: ier
   real(kind=CUSTOM_REAL), dimension(nglob) :: wavefield
 
-  write(*,*) "test NOISE_TOMOGRAPHY 2", NOISE_TOMOGRAPHY
-
   ! checks if anything to do
   if (NOISE_TOMOGRAPHY /= 1 .and. NOISE_TOMOGRAPHY /= 2) return
 
@@ -548,11 +542,8 @@
   if (nglob /= nglob_elastic) &
     call stop_the_code('Noise simulation requires elastic simulation')
 
-
   if (NOISE_TOMOGRAPHY == 1) then
     ! stores forward generating wavefield
-
-    write(*,*) "test 00", it
 
     ! opens files
     if (it == 1) then
@@ -581,11 +572,9 @@
 
   else if (NOISE_TOMOGRAPHY == 2) then
     ! stores whole forward wavefield for reconstruction
-    write(*,*) "test 1", it
 
     ! opens files
     if (it == 1) then
-      write(*,*) "test 2", it
       ! user output
       if (myrank == 0) write(IMAIN,*) 'noise simulation: storing forward wavefield in file noise_phi.bin'
       ! opens file
@@ -708,3 +697,4 @@
   enddo
 
   end subroutine spec2glob
+

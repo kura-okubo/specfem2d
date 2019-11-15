@@ -596,7 +596,6 @@
   ! only if this slice contains elastic elements
   if (any_elastic) then
     ! counts inner and outer elements
-    write(IMAIN,*) "nspeccheck: ", myrank, nspec
     do ispec = 1, nspec
       if (ispec_is_elastic(ispec)) then
         if (ispec_is_inner(ispec) .eqv. .true.) then
@@ -635,11 +634,6 @@
     if (ier /= 0 ) call stop_the_code('Error allocating dummy array phase_ispec_inner_elastic')
     phase_ispec_inner_elastic(:,:) = 0
   endif
-
-  write(IMAIN,*) "id range check: outer", myrank, &
-  minval(phase_ispec_inner_elastic(1:ispec_outer,1)),  maxval(phase_ispec_inner_elastic(1:ispec_outer,1))
-  write(IMAIN,*) "id range check: inner", myrank, &
-  minval(phase_ispec_inner_elastic(1:ispec_inner,2)),  maxval(phase_ispec_inner_elastic(1:ispec_inner,2))
 
   ! user output
   if (ELASTIC_SIMULATION) then

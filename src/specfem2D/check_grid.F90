@@ -480,9 +480,19 @@
 
 
   ! creates a PostScript file with stability condition
+  !if (output_postscript_snapshot) then
+  !  call check_grid_create_postscript(courant_stability_number_max,lambdaPImin,lambdaPImax,lambdaSmin,lambdaSmax)
+  !endif
+
+  !----------------------------------------------------------------!
+  !Modified: forcing output postscript of grids (Kurama 05/06/2019)
+  !----------------------------------------------------------------!
+  output_postscript_snapshot = .true.
   if (output_postscript_snapshot) then
     call check_grid_create_postscript(courant_stability_number_max,lambdaPImin,lambdaPImax,lambdaSmin,lambdaSmax)
   endif
+  output_postscript_snapshot = .false.
+  !----------------------------------------------------------------!
 
   end subroutine check_grid
 

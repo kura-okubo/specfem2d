@@ -36,6 +36,7 @@
   use constants, only: SOURCE_IS_MOVING,USE_ENFORCE_FIELDS,ALPHA_LDDRK,BETA_LDDRK
   use specfem_par
   use specfem_par_noise
+  use shared_parameters, only: COUPLING_IN
 
   implicit none
 
@@ -113,7 +114,6 @@
           ! adjoint sources
           call compute_add_sources_viscoelastic_adjoint()
         endif
-
       endif
 
     endif
@@ -122,7 +122,6 @@
     if (AXISYM) then
       call enforce_zero_radial_displacements_on_the_axis()
     endif
-
 
 #ifdef USE_MPI
     ! LDDRK
@@ -153,7 +152,6 @@
         call assemble_MPI_vector_el_w(accel_elastic)
       endif
     endif
-
 #endif
 
   enddo ! iphase
@@ -183,42 +181,8 @@
     accel_elastic(:,:) = accel_elastic(:,:) * rmass_inverse_elastic(:,:)
   endif
 
-  do iphase = 1,2
-#ifdef USE_MPI
-
-    ! assemble all the contributions between slices using MPI
-    if (NPROC > 1 .and. ninterface_elastic > 0) then
-      ! collects all contributions on shared degrees of freedom
-      !call assemble_MPI_vector_el_blocking(accel_elastic)
-      ! sends out MPI interface data
-      if (iphase == 1) then
-        ! sends accel values to corresponding MPI interface neighbors
-        call assemble_MPI_vector_el_s(accel_elastic)
-      else
-        ! waits for send/receive requests to be completed and assembles values
-        call assemble_MPI_vector_el_w(accel_elastic)
-      endif
-    endif
-
-#endif
-  enddo
-
-
-  !Correct acceleration for coupling points
-  !write(*,*) COUPLING_IN
+  ! coupling acceleration injection
   if (COUPLING_IN) call add_ext_source(accel_elastic)
-  write(*,*) "rank, it:", myrank, it
-  ! do iphase = 1,2
-  !   if (COUPLING_IN) then
-  !     if (NPROC == 1) then
-  !       call add_ext_source(accel_elastic, iphase)
-  !     else
-  !       !call synchronize_all()
-  !       call add_ext_source(accel_elastic, iphase)
-  !     endif
-  !   endif
-  ! enddo
-
 
   ! time stepping
   select case (time_stepping_scheme)
@@ -375,3 +339,4 @@
   end select
 
   end subroutine compute_forces_viscoelastic_main_backward
+
