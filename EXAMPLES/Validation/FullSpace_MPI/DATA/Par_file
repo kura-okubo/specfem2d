@@ -17,7 +17,7 @@ NOISE_TOMOGRAPHY                = 0
 SAVE_FORWARD                    = .false.
 
 # parameters concerning partitioning
-NPROC                           = 2              # number of processes
+NPROC                           = 3              # number of processes
 partitioning_method             = 3              # SCOTCH = 3, ascending order (very bad idea) = 1
 
 # number of control nodes per element (4 or 9)
@@ -115,7 +115,7 @@ add_Bielak_conditions_left      = .false.
 ACOUSTIC_FORCING                = .false.        # acoustic forcing of an acoustic medium with a rigid interface
 
 # coupling with HOSS
-COUPLING_IN                     = .true.         # please define dummy number below even if this is false
+COUPLING_IN                     = .false.         # please define dummy number below even if this is false
 extori_x                        = 0.0d0            # x origin of coupling source region
 extori_z                        = 0.0d0       # z origin of coupling source region
 R_ext                           = 5000.0       # Radius of coupling source elements: Need to compute source within this radius by the other numerical software
@@ -310,7 +310,7 @@ COMPUTE_INTEGRATED_ENERGY_FIELD = .false.
 
 # every how many time steps we draw JPEG or PostScript pictures of the simulation
 # and/or we dump results of the simulation as ASCII or binary files (costly, do not use a very small value)
-NSTEP_BETWEEN_OUTPUT_IMAGES     = 500
+NSTEP_BETWEEN_OUTPUT_IMAGES     = 50
 
 # minimum amplitude kept in % for the JPEG and PostScript snapshots; amplitudes below that are muted
 cutsnaps                        = 1.

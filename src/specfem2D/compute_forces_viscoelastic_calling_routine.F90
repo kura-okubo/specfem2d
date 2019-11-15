@@ -183,20 +183,41 @@
     accel_elastic(:,:) = accel_elastic(:,:) * rmass_inverse_elastic(:,:)
   endif
 
+  do iphase = 1,2
+#ifdef USE_MPI
+
+    ! assemble all the contributions between slices using MPI
+    if (NPROC > 1 .and. ninterface_elastic > 0) then
+      ! collects all contributions on shared degrees of freedom
+      !call assemble_MPI_vector_el_blocking(accel_elastic)
+      ! sends out MPI interface data
+      if (iphase == 1) then
+        ! sends accel values to corresponding MPI interface neighbors
+        call assemble_MPI_vector_el_s(accel_elastic)
+      else
+        ! waits for send/receive requests to be completed and assembles values
+        call assemble_MPI_vector_el_w(accel_elastic)
+      endif
+    endif
+
+#endif
+  enddo
+
 
   !Correct acceleration for coupling points
   !write(*,*) COUPLING_IN
-
-  do iphase = 1,2
-    if (COUPLING_IN) then
-      if (NPROC == 1) then
-        call add_ext_source(accel_elastic, iphase)
-      else
-        !call synchronize_all()
-        call add_ext_source(accel_elastic, iphase)
-      endif
-    endif
-  enddo
+  if (COUPLING_IN) call add_ext_source(accel_elastic)
+  write(*,*) "rank, it:", myrank, it
+  ! do iphase = 1,2
+  !   if (COUPLING_IN) then
+  !     if (NPROC == 1) then
+  !       call add_ext_source(accel_elastic, iphase)
+  !     else
+  !       !call synchronize_all()
+  !       call add_ext_source(accel_elastic, iphase)
+  !     endif
+  !   endif
+  ! enddo
 
 
   ! time stepping
