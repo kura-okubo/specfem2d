@@ -116,11 +116,18 @@ ACOUSTIC_FORCING                = .false.        # acoustic forcing of an acoust
 
 # coupling with HOSS
 COUPLING_IN                     = .true.         # please define dummy number below even if this is false
+COUPLING_SHAPE                  = circle      # rectangle or circle
 extori_x                        = 0.0d0            # x origin of coupling source region
 extori_z                        = 0.0d0       # z origin of coupling source region
 R_ext                           = 5000.0       # Radius of coupling source elements: Need to compute source within this radius by the other numerical software
 dR_ext                          = 250.0        # Threshold of diference in distance (R-norm(cx, cz)) to detect source element: normally dx/2 works
+rec_xmin                        = -5000.0 # bottom-left corner of box
+rec_zmin                        = -2500.0 # bottom-left corner of box
+rec_xmax                        = 5000.0  # top-right corner of box
+rec_zmax                        = 2500.0  # top-right corner of box
+rec_dx                          = 250.0   # Threshold of diference in distance from box line.
 
+#--------------
 #-----------------------------------------------------------------------------
 #
 # receivers

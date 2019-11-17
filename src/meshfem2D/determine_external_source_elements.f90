@@ -60,7 +60,8 @@
 
     use part_unstruct_par, only: elmnts, nodes_coords,nx,nz,nxread,nzread
 
-    use shared_parameters, only: ngnod, extori_x, extori_z, R_ext, dR_ext, DT
+    use shared_parameters, only: ngnod, extori_x, extori_z, R_ext, dR_ext, &
+                              rec_xmin, rec_zmin, rec_xmax, rec_zmax, rec_dx, DT, COUPLING_SHAPE
 
     implicit none
 
@@ -78,6 +79,8 @@
     integer, dimension (ngnod) :: npele
     double precision, dimension (2, 4) :: elecoords
     double precision :: cx, cz
+    double precision :: a, b, c, d
+
 
     ! write(IMAIN,*)
     ! write(IMAIN,*) "Test determine_external_source_elements"
@@ -179,17 +182,69 @@
 
       !write(IMAIN,*) "cx, cz: ", cx, cz
 
-      if (abs(R_ext-sqrt((cx-extori_x)**2+(cz-extori_z)**2)) < dR_ext) then
-        !write(IMAIN,*) "This element goes to source element.", cx, cz, elecoords(1,1), elecoords(2,1)
-        num_sourceele = num_sourceele + 1
+      select case (trim(COUPLING_SHAPE))
+      case ('circle')
+          ! select coupling elements on circle
+          if (abs(R_ext-sqrt((cx-extori_x)**2+(cz-extori_z)**2)) < dR_ext) then
+            !write(IMAIN,*) "This element goes to source element.", cx, cz, elecoords(1,1), elecoords(2,1)
+            num_sourceele = num_sourceele + 1
 
-        write(20, "(A,I6,A,1F20.8,A,1F20.8,A,1F20.8,A,1F20.8,A)") "set object ", num_sourceele, &
-        " rect from ", elecoords(1,1), ",", elecoords(2,1), " to ", elecoords(1,3), ",", elecoords(2,3), &
-        " fc rgb 'red'"
+            write(20, "(A,I6,A,1F20.8,A,1F20.8,A,1F20.8,A,1F20.8,A)") "set object ", num_sourceele, &
+            " rect from ", elecoords(1,1), ",", elecoords(2,1), " to ", elecoords(1,3), ",", elecoords(2,3), &
+            " fc rgb 'red'"
 
-        write(30, "(I6,',',1F20.8,',',1F20.8,',',1F20.8)") iele, DT, cx, cz
+            write(30, "(I6,',',1F20.8,',',1F20.8,',',1F20.8)") iele, DT, cx, cz
 
-      endif
+          endif
+
+      case ('rectangle')
+        ! select coupling elements on rectangle
+        ! loop four edges
+        do i = 1,4
+          if (i == 1) then
+            a = 0
+            b= 1
+            c = -rec_zmin
+          elseif (i == 2) then
+            a = 1
+            b= 0
+            c = -rec_xmax
+          elseif (i == 3) then
+            a = 0
+            b= 1
+            c = -rec_zmax
+          elseif (i == 4) then
+            a = 1
+            b= 0
+            c = -rec_xmin
+          endif
+
+          d = abs(a*cx + b*cz + c) / (sqrt(a**2+b**2))
+          ! select coupling elements on circle
+          if (d < rec_dx .and.&
+              cx > rec_xmin-rec_dx .and.&
+              cx < rec_xmax+rec_dx .and.&
+              cz > rec_zmin-rec_dx .and.&
+              cz < rec_zmax+rec_dx) then
+            !write(IMAIN,*) "This element goes to source element.", cx, cz, elecoords(1,1), elecoords(2,1)
+            num_sourceele = num_sourceele + 1
+
+            write(20, "(A,I6,A,1F20.8,A,1F20.8,A,1F20.8,A,1F20.8,A)") "set object ", num_sourceele, &
+            " rect from ", elecoords(1,1), ",", elecoords(2,1), " to ", elecoords(1,3), ",", elecoords(2,3), &
+            " fc rgb 'red'"
+
+            write(30, "(I6,',',1F20.8,',',1F20.8,',',1F20.8)") iele, DT, cx, cz
+          endif
+
+        enddo
+
+
+      case default
+          print *,"Error: unrecognized COUPLING_SHAPE = ",trim(COUPLING_SHAPE)
+          print *,'COUPLING_SHAPE should be "circle" or "rectangle"'
+          call stop_the_code('Invalid MODEL parameter')
+      end select
+
     enddo
 
     close(20)

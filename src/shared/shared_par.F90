@@ -170,13 +170,19 @@ module shared_input_parameters
 
   ! COUPLING_IN
   logical :: COUPLING_IN
+  character(len=MAX_STRING_LEN) :: COUPLING_SHAPE
 
   ! coupling elements
   double precision :: extori_x
   double precision :: extori_z
   double precision :: R_ext
   double precision :: dR_ext
-
+  double precision :: rec_xmin
+  double precision :: rec_zmin
+  double precision :: rec_xmax
+  double precision :: rec_zmax
+  double precision :: rec_dx
+  
   !#-----------------------------------------------------------------------------
   !#
   !# receivers
