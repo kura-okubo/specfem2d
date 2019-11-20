@@ -1,0 +1,132 @@
+running example: Tue Nov 19 18:32:56 EST 2019
+
+setting up example...
+
+
+running mesher on 3 processors...
+
+
+ **********************************************
+ *** Specfem 2-D Mesher - MPI version       ***
+ **********************************************
+
+ Running Git version of the code corresponding to 
+ dating From 
+
+ Reading the parameter file...
+
+ Title of the simulation: Validation for 2D Full space SV elastic
+
+
+ Receiver lines:
+   Nb of line sets =            1
+
+   using existing STATIONS file 
+   file name is ./DATA/STATIONS
+   found          384  receivers
+
+ Materials:
+   Nb of solid, fluid or porous materials =            1
+
+ --------
+ Material #           1  isotropic
+ rho,cp,cs   =    2700.0000000000000        5773.5026900000003        3333.3333299999999     
+ Qkappa, Qmu =    9999.0000000000000        9999.0000000000000     
+ Material is solid
+ --------
+
+ Mesh from internal meshing:
+
+ Reading interface data from file: ./DATA/interfaces_elastic.dat                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   
+ Reading            2  points for interface            1
+ Reading            2  points for interface            2
+
+ Total number of layers in z direction =            1
+ There are          300  spectral elements along Z in layer            1
+
+ Total number of spectral elements along X =          300
+ Total number of spectral elements along Z =          300
+
+ Regions:
+   Nb of regions in the mesh =            1
+
+ ------
+ Region            1
+ IX from            1  to          300
+ IZ from            1  to          300
+ Material #            1  isotropic
+ Material is solid
+ vp     =    5773.50293    
+ vs     =    3333.33325    
+ rho    =    2700.00000    
+ Poisson's ratio =   0.250000000    
+ QKappa =    9999.00000    
+ Qmu    =    9999.00000    
+ ------
+ Total number of spectral elements         =        90000
+
+
+ Parameter file successfully read 
+
+ The mesh contains        90000  elements
+
+ Control elements have            4  nodes
+
+ Source           1
+   Position xs, zs =    0.0000000000000000        0.0000000000000000     
+
+   Source type (1=force, 2=moment tensor, 3=Rayleigh wave, 4=plane incident P, 5=plane incident S):            2
+   Moment tensor source:
+   Mxx of the source =    1.0000000000000000     
+   Mzz of the source =   -1.0000000000000000     
+   Mxz of the source =   0.40000000000000002     
+
+   Time function type (1=Ricker, 2=First derivative, 3=Gaussian, 4=Dirac, 5=Heaviside, 8=Read from file, 9=burst):           3
+   Gaussian:
+   Frequency, delay =   0.50000000000000000        0.0000000000000000     
+
+ Reading interface data from file: ./DATA/interfaces_elastic.dat
+
+ Mesh dimensions: 
+   Min and max value of X in the grid =   -30000.000000000000        30000.000000000000     
+   Min and max value of Z in the grid =   -30000.000000000000        30000.000000000000     
+
+
+ Saving the grid in Gnuplot format...
+
+ drawing horizontal lines of the grid
+ drawing vertical lines of the grid
+ COUPLING_IN TEST: F
+ Grid saved in Gnuplot format...
+
+
+ ************ Computing elements load ************
+ Number of elastic elements :       86436
+ Number of acoustic elements :           0
+ Number of viscoelastic elements :           0
+ Number of elastic PML elements :        3564
+ Number of acoustic PML elements :           0
+ Number of viscoelastic PML elements :           0
+ *************************************************
+
+
+ Partitioning method: SCOTCH
+
+ nedges_coupled (acoustic/elastic)     =            0
+ nedges_coupled (acoustic/poroelastic) =            0
+ nedges_coupled (poroelastic/elastic)  =            0
+ num_loc(0)       27763
+ num_loc(1)       31550
+
+ slice            0  has number of spectral elements =       27763
+ slice            1  has number of spectral elements =       31550
+ slice            2  has number of spectral elements =       30687
+
+ Position (x,z) of the source =    0.0000000000000000        0.0000000000000000     
+
+
+ This will be a parallel simulation on            3  processor cores
+
+
+running solver on 3 processors...
+
