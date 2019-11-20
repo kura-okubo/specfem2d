@@ -232,10 +232,9 @@
             write(20, "(A,I6,A,1F20.8,A,1F20.8,A,1F20.8,A,1F20.8,A)") "set object ", num_sourceele, &
             " rect from ", elecoords(1,1), ",", elecoords(2,1), " to ", elecoords(1,3), ",", elecoords(2,3), &
             " fc rgb 'red'"
-
             write(30, "(I6,',',1F20.8,',',1F20.8,',',1F20.8)") iele, DT, cx, cz
+            exit
           endif
-
         enddo
 
 
