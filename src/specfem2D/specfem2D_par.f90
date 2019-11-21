@@ -698,6 +698,9 @@ module specfem_par
   ! for coupling with acceleration injection
   !---------------------------------------------------------------------
   integer, dimension(:, :), allocatable :: glob2loc_table
+  integer, dimension(:, :), allocatable :: iglob_interface_table
+  double precision, dimension(:, :), allocatable :: coord_interface
+  integer :: num_iglob_interface
 
 end module specfem_par
 

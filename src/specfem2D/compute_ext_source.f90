@@ -157,7 +157,12 @@
 
   num_modified_ele = 0
 
-  if (it == 1) call setup_glob2loctable()
+  if (it == 1) then
+    !1. setup table for global id to MPI local id
+    call setup_glob2loctable()
+    !2. setup table for MPI interface igrob
+    call setup_iglob_interface()
+  endif
 
   do iphase = 1, 2
 
@@ -294,7 +299,6 @@
 
   end subroutine add_ext_source
 
-
   subroutine read_ext_source(extsource, extsource_eleid, extsource_globalid)
 
     ! reads in time series based on external source files
@@ -382,3 +386,443 @@
     close(IIN)
 
   end subroutine setup_glob2loctable
+
+  !-----------------------------------------------------------------------------------
+  ! The subroutines below are for the smoothing on iglob located at MPI interface.
+  ! We assemble a table which indicate the iglob id, number of overlap and processor rank
+  !-----------------------------------------------------------------------------------
+
+  subroutine setup_iglob_interface()
+    ! read glob2loctable for acceleration injection at coupling elements
+    use mpi
+    use constants, only: IMAIN, EXT_SOURCE_NUM_MAX, CUSTOM_REAL
+    use specfem_par, only: myrank, NPROC
+    implicit none
+
+    ! iglob_interface_table_temp contains:
+    ! (iglob, num of overlap on MPI interface, contain flag on the MPI Domain)
+    integer, dimension(EXT_SOURCE_NUM_MAX*3,NPROC+1) :: iglob_interface_table_temp
+    double precision, dimension(EXT_SOURCE_NUM_MAX*3, 2) :: coord_interface_temp
+    integer :: num_iglob_temp
+
+    ! evaluate only outer elements in MPI domain
+
+    !initialize array
+    iglob_interface_table_temp(:,:) = 0._CUSTOM_REAL
+    num_iglob_temp = 0
+
+    if (NPROC > 1) then
+
+      write(IMAIN, *) "start searching iglob on MPI interface"
+      if (myrank == 0) then
+
+        call recv_iglob_on_interface(1, iglob_interface_table_temp, coord_interface_temp,num_iglob_temp)
+        write(IMAIN, *) "receive at root"
+
+        call find_iglob_on_interface(iglob_interface_table_temp,coord_interface_temp, num_iglob_temp)
+        write(IMAIN, *) "num_iglob_temp: ", num_iglob_temp
+        write(IMAIN,*) "MPI circulation of find_iglob_on_interface done."
+
+      else
+        if (myrank == NPROC-1) then
+          ! start finding iglob froom this MPI domain
+          write(IMAIN, *) "start ", myrank
+          call find_iglob_on_interface(iglob_interface_table_temp,coord_interface_temp, num_iglob_temp)
+          ! send iglob_interface_table_temp and num_iglob_temp to next MPI domain
+          call send_iglob_on_interface(myrank - 1, iglob_interface_table_temp,coord_interface_temp,num_iglob_temp)
+          write(IMAIN, *) "num_iglob_temp: ", num_iglob_temp, "send to", myrank - 1
+
+        else
+          call recv_iglob_on_interface(myrank + 1, iglob_interface_table_temp,coord_interface_temp,num_iglob_temp)
+          write(IMAIN, *) "receive from", myrank + 1
+          call find_iglob_on_interface(iglob_interface_table_temp,coord_interface_temp,num_iglob_temp)
+          call send_iglob_on_interface(myrank - 1, iglob_interface_table_temp,coord_interface_temp,num_iglob_temp)
+          write(IMAIN, *) "num_iglob_temp: ", num_iglob_temp, "send to", myrank - 1
+
+        endif
+      endif
+
+      ! synchronizes processes
+      call synchronize_all()
+
+      write(IMAIN, *) "start broad cast ", myrank
+
+      call bcast_iglob_on_interface(iglob_interface_table_temp,coord_interface_temp,num_iglob_temp)
+
+      !-------!
+      !Debug
+      call debug_dump_table(iglob_interface_table_temp,coord_interface_temp,num_iglob_temp)
+      !-------!
+
+      ! allocate and fill out iglob_interface_table
+      call assemble_iglob_interface_table(iglob_interface_table_temp,coord_interface_temp,num_iglob_temp)
+
+      !-------!
+      !Debug
+      call debug_assemble_dump_table()
+      !-------!
+
+    else
+      ! serial run case: in this case num_iglob_temp remains to be 0.
+    endif
+
+  end subroutine setup_iglob_interface
+  !
+  !-----------------------------------------------------------------------------------
+  !
+  subroutine find_iglob_on_interface(iglob_interface_table_temp, coord_interface_temp, num_iglob_temp)
+
+    ! read glob2loctable for acceleration injection at coupling elements
+    use constants, only: IMAIN, EXT_SOURCE_NUM_MAX, NGLLX,NGLLZ
+    use specfem_par, only: myrank, nspec, NPROC, glob2loc_table, nspec_inner_elastic, nspec_outer_elastic, &
+                          ibool, phase_ispec_inner_elastic, coord
+    use shared_parameters, only: iele, number_of_extsource
+
+    implicit none
+
+    integer :: i, i1, j1, k, eleid
+    integer, dimension(EXT_SOURCE_NUM_MAX * 3, NPROC + 1), intent(inout) :: iglob_interface_table_temp
+    double precision, dimension(EXT_SOURCE_NUM_MAX*3, 2), intent(inout)  :: coord_interface_temp
+    integer, intent(inout) :: num_iglob_temp
+    integer, dimension(:), allocatable :: iphase_elelist
+    integer :: ispec_p, id_iglob_overlap, iglob, iphase, num_elements
+    integer :: loc_rank, loc_eleid
+    double precision :: cx, cz
+
+    do iphase = 1, 1
+
+      ! choses inner/outer elements
+      if (iphase == 1) then
+        num_elements = nspec_outer_elastic
+      else
+        num_elements = nspec_inner_elastic
+      endif
+
+      allocate(iphase_elelist(num_elements))
+
+      ! make list of outer/inner elements
+      do ispec_p = 1,num_elements
+        iphase_elelist(ispec_p) = phase_ispec_inner_elastic(ispec_p,iphase)
+      enddo
+
+      ! Debug
+      write(IMAIN, *) myrank, ": coord size:" ,size(coord,2)
+      do ispec_p = 1,num_elements
+        do j1 = 1,NGLLZ
+          do i1 = 1,NGLLX
+            iglob = ibool(i1,j1,iphase_elelist(ispec_p))
+            write(IMAIN, *) coord(1,iglob), coord(2,iglob)
+          enddo
+        enddo
+      enddo
+
+      ! ! make list of outer/inner elements
+      ! do ispec_p = 1, nspec_outer_elastic
+      !   iphase_elelist(ispec_p) = phase_ispec_inner_elastic(ispec_p,1)
+      ! enddo
+
+      do eleid = 1, number_of_extsource
+        do i = 1, nspec
+          if (glob2loc_table(i, 1) == iele(eleid)) then
+            loc_rank = glob2loc_table(i, 2)
+            loc_eleid = glob2loc_table(i, 3)
+            ! do search on outer elements
+            do ispec_p = 1,num_elements
+              ! check if this  element is outer
+              if (iphase_elelist(ispec_p) == loc_eleid) then
+                ! loop GLL points in coupling element
+                do j1 = 1,NGLLZ
+                  do i1 = 1,NGLLX
+                    iglob = ibool(i1,j1,loc_eleid)
+                    cx = coord(1,iglob)
+                    cz = coord(2,iglob)
+                    id_iglob_overlap = 0
+                    ! search iglob in the present domain
+                    do k = 1, num_iglob_temp
+                      !write(IMAIN,*) "test 2.1", myrank, iele(eleid)
+                      if (coord_interface_temp(k, 1) .eq. cx .and. &
+                        coord_interface_temp(k, 2) .eq. cz) then
+                        ! this gll point is overlapped on MPI interfacec
+                        id_iglob_overlap = k
+                        exit
+                      endif
+                      !write(IMAIN,*) "test 2.2", myrank
+                    end do
+
+                    if (id_iglob_overlap == 0) then
+                      ! this iglob is first time to add
+                      !write(IMAIN, *) "find id_iglob_overlap"
+                      num_iglob_temp = num_iglob_temp + 1
+                      ! iglob
+                      !iglob_interface_table_temp(num_iglob_temp, 1) = iglob
+                      ! coordinates
+                      coord_interface_temp(num_iglob_temp, 1) = cx
+                      coord_interface_temp(num_iglob_temp, 2) = cz
+                      ! num of overlap
+                      iglob_interface_table_temp(num_iglob_temp, 1) = &
+                          iglob_interface_table_temp(num_iglob_temp, 1) + 1
+                      ! MPI domain flag
+                      iglob_interface_table_temp(num_iglob_temp, myrank+2) = 1
+                    else
+                      ! this iglob already has value: it will be averaged
+                      iglob_interface_table_temp(id_iglob_overlap, 1) = &
+                          iglob_interface_table_temp(id_iglob_overlap, 1) + 1
+
+                      iglob_interface_table_temp(id_iglob_overlap, myrank+2) = 1
+
+                    endif !id_iglob_overlap
+                  enddo ! i1 NGLLX
+                enddo ! j1 NGLLZ
+              endif ! if outer
+            enddo ! do search within iphase_elelist
+
+            exit ! exit nspec loop because this eleid is already found and processed
+
+          endif ! if this iele is in MPIDomain
+        enddo ! do search all elements within MPIDomain
+      enddo ! loop all coupling element
+
+      deallocate(iphase_elelist)
+
+    enddo
+
+    end subroutine find_iglob_on_interface
+
+    !
+    !-----------------------------------------------------------------------------------
+    !
+    subroutine send_iglob_on_interface(dest, iglob_interface_table_temp, coord_interface_temp, num_iglob_temp)
+
+      use constants, only: EXT_SOURCE_NUM_MAX
+      use specfem_par, only: NPROC
+
+      ! send iglob_interface_table_temp and num_iglob_temp to dest
+      use my_mpi_communicator
+      use mpi
+
+      implicit none
+
+      integer :: dest
+      integer, dimension(2) :: sendbuf
+      integer :: ier
+
+      integer, dimension(EXT_SOURCE_NUM_MAX*3,NPROC+1), intent(in) :: iglob_interface_table_temp
+      double precision, dimension(EXT_SOURCE_NUM_MAX*3, 2), intent(in)  :: coord_interface_temp
+
+      integer, intent(in) :: num_iglob_temp
+
+      !send iglob_interface_table_temp
+      call MPI_SEND(iglob_interface_table_temp,(EXT_SOURCE_NUM_MAX*3)*(NPROC+1), &
+                  MPI_INTEGER,dest,1,my_local_mpi_comm_world,ier)
+
+      !send coord_interface_temp
+      call MPI_SEND(coord_interface_temp,(EXT_SOURCE_NUM_MAX*3)*2, &
+                  MPI_DOUBLE_PRECISION,dest,1,my_local_mpi_comm_world,ier)
+
+      !send num_iglob_temp
+      sendbuf(1) = num_iglob_temp
+      sendbuf(2) = 0
+      call MPI_SEND(sendbuf,1, MPI_INTEGER,dest,2,my_local_mpi_comm_world,ier)
+
+    end subroutine send_iglob_on_interface
+    !
+    !-----------------------------------------------------------------------------------
+    !
+    subroutine recv_iglob_on_interface(dest, iglob_interface_table_temp, coord_interface_temp, num_iglob_temp)
+
+      ! synchronuous/blocking receive
+      use constants, only: EXT_SOURCE_NUM_MAX
+      use specfem_par, only: NPROC
+
+      use my_mpi_communicator
+      use mpi
+
+      implicit none
+
+      integer :: dest
+      integer, dimension(2) :: recvbuf
+      integer :: ier
+
+      integer, dimension(EXT_SOURCE_NUM_MAX*3,NPROC+1), intent(inout) :: iglob_interface_table_temp
+      double precision, dimension(EXT_SOURCE_NUM_MAX*3, 2), intent(inout)  :: coord_interface_temp
+
+      integer, intent(inout) :: num_iglob_temp
+
+      !receive iglob_interface_table_temp
+      call MPI_RECV(iglob_interface_table_temp,(EXT_SOURCE_NUM_MAX*3)*(NPROC+1), &
+                  MPI_INTEGER,dest,1,my_local_mpi_comm_world,MPI_STATUS_IGNORE,ier)
+
+      !receive coord_interface_temp
+      call MPI_RECV(coord_interface_temp,(EXT_SOURCE_NUM_MAX*3)*2, &
+                  MPI_DOUBLE_PRECISION,dest,1,my_local_mpi_comm_world,MPI_STATUS_IGNORE,ier)
+
+      !receive num_iglob_temp
+      call MPI_RECV(recvbuf, 1, MPI_INTEGER,dest,2,my_local_mpi_comm_world,MPI_STATUS_IGNORE,ier)
+
+      num_iglob_temp = recvbuf(1)
+
+    end subroutine recv_iglob_on_interface
+    !
+    !-----------------------------------------------------------------------------------
+    !
+    subroutine bcast_iglob_on_interface(iglob_interface_table_temp, coord_interface_temp, num_iglob_temp)
+
+      ! synchronuous/blocking receive
+      use constants, only: EXT_SOURCE_NUM_MAX
+      use specfem_par, only: NPROC
+
+      use my_mpi_communicator
+      use mpi
+
+      implicit none
+
+      integer, dimension(2) :: bcastbuf
+      integer :: ier
+
+      integer, dimension(EXT_SOURCE_NUM_MAX*3,NPROC+1), intent(inout) :: iglob_interface_table_temp
+      double precision, dimension(EXT_SOURCE_NUM_MAX*3, 2), intent(inout)  :: coord_interface_temp
+      integer, intent(inout) :: num_iglob_temp
+
+      call MPI_BCAST(iglob_interface_table_temp,(EXT_SOURCE_NUM_MAX*3)*(NPROC+1), &
+                    MPI_INTEGER,0,my_local_mpi_comm_world,ier)
+
+      call MPI_BCAST(coord_interface_temp,(EXT_SOURCE_NUM_MAX*3)*2, &
+                    MPI_DOUBLE_PRECISION,0,my_local_mpi_comm_world,ier)
+
+      bcastbuf(1) = num_iglob_temp
+      bcastbuf(2) = 0
+
+      call MPI_BCAST(bcastbuf,1,MPI_INTEGER,0,my_local_mpi_comm_world,ier)
+
+      num_iglob_temp = bcastbuf(1)
+
+    end subroutine bcast_iglob_on_interface
+    !
+    !-----------------------------------------------------------------------------------
+    !
+
+    subroutine assemble_iglob_interface_table(iglob_interface_table_temp, coord_interface_temp, num_iglob_temp)
+
+      ! read glob2loctable for acceleration injection at coupling elements
+      use constants, only: IMAIN, EXT_SOURCE_NUM_MAX, CUSTOM_REAL
+      use specfem_par, only: myrank, NPROC, iglob_interface_table, coord_interface, num_iglob_interface
+
+      implicit none
+
+      integer :: i, j, numoverlap
+      integer, dimension(EXT_SOURCE_NUM_MAX*3,NPROC+1), intent(in) :: iglob_interface_table_temp
+      double precision, dimension(EXT_SOURCE_NUM_MAX*3, 2), intent(in)  :: coord_interface_temp
+
+      integer, intent(in) :: num_iglob_temp
+
+      ! count the number of overlapped iglob at MPI interface
+      numoverlap = 0
+      do i = 1, num_iglob_temp
+        if (iglob_interface_table_temp(i, 1) > 1) then
+          ! this iglob has overlap between MPI domains
+          numoverlap = numoverlap + 1
+        endif
+      enddo
+
+      ! initializing iglob_interface_table
+      allocate(iglob_interface_table(numoverlap, NPROC+1))
+      allocate(coord_interface(numoverlap, 2))
+
+      num_iglob_interface = numoverlap
+
+      ! reassemble iglob_interface_table from iglob_interface_table_temp on every processor
+      numoverlap = 0
+      do i = 1, num_iglob_temp
+        if (iglob_interface_table_temp(i, 1) > 1) then
+          !write(*,*) "test find overlap:", iglob_interface_table_temp(i, 1)
+          numoverlap = numoverlap + 1
+          ! this iglob has overlap between MPI domains
+          do j = 1,NPROC+1
+            !write(*,*) "test find numoverlap:", numoverlap
+            iglob_interface_table(numoverlap, j) = iglob_interface_table_temp(i, j)
+            !write(IMAIN,*)  "test find numoverlap in table:", iglob_interface_table(numoverlap, j)
+          enddo
+          write(IMAIN,*) iglob_interface_table(numoverlap,1:NPROC+1)
+          coord_interface(numoverlap, 1) = coord_interface_temp(i, 1)
+          coord_interface(numoverlap, 2) = coord_interface_temp(i, 2)
+
+          ! write(IMAIN,*) myrank, "test find coord1:", coord_interface_temp(i, 1), coord_interface_temp(i, 2)
+          ! write(IMAIN,*) myrank, "test find coord2:", coord_interface(numoverlap, 1), coord_interface(numoverlap, 2)
+
+        endif
+      enddo
+
+      write(IMAIN,*) "myrank: ", myrank
+      write(IMAIN,*) coord_interface
+    end subroutine assemble_iglob_interface_table
+    !
+    !-----------------------------------------------------------------------------------
+    !
+    subroutine debug_dump_table(iglob_interface_table_temp,coord_interface_temp,num_iglob_temp)
+
+      use constants, only: IMAIN, OUTPUT_FILES, EXT_SOURCE_NUM_MAX
+      use specfem_par, only: myrank, NPROC
+
+      implicit none
+
+      integer, dimension(EXT_SOURCE_NUM_MAX*3,NPROC+1), intent(in) :: iglob_interface_table_temp
+      double precision, dimension(EXT_SOURCE_NUM_MAX*3, 2), intent(in)  :: coord_interface_temp
+
+      integer, intent(in) :: num_iglob_temp
+      integer :: i, ier
+      double precision :: cx, cz
+      character(len=200) :: foname
+
+      write(foname, "(A23,I0.3,A4)") "debug_iglob_interface_table_temp_", myrank,".csv"
+      write(IMAIN, *) foname
+      open(unit=1002,file=trim(OUTPUT_FILES)//foname,status='unknown',iostat=ier)
+      if (ier /= 0 ) then
+        call stop_the_code('Error saving debug iglob_interface_table_temp.csv')
+      endif
+
+      do i = 1, num_iglob_temp
+
+        cx = coord_interface_temp(i, 1)
+        cz = coord_interface_temp(i, 2)
+
+        write(1002, '(1(I5,","), 2(F20.8,","), 4(I5,","))') iglob_interface_table_temp(i, 1), &
+                    cx, cz, iglob_interface_table_temp(i, 2:NPROC+1)
+      enddo
+
+      close(1002)
+
+    end subroutine debug_dump_table
+    !
+    !-----------------------------------------------------------------------------------
+    !
+    subroutine debug_assemble_dump_table()
+      ! read glob2loctable for acceleration injection at coupling elements
+      use constants, only: OUTPUT_FILES
+      use specfem_par, only: myrank, NPROC, iglob_interface_table, coord_interface, num_iglob_interface
+
+      implicit none
+
+      integer :: i, ier
+      double precision :: cx, cz
+      character(len=200) :: foname
+
+      write(*,*) myrank, "test"
+      write(foname, "(A22,I0.3,A4)") "debug_assembled_table_", myrank,".csv"
+      open(unit=1003,file=trim(OUTPUT_FILES)//foname,status='unknown',iostat=ier)
+      if (ier /= 0 ) then
+        call stop_the_code('Error saving debug iglob_interface_table_temp.csv')
+      endif
+
+      do i = 1, num_iglob_interface
+
+        cx = coord_interface(i, 1)
+        cz = coord_interface(i, 2)
+        write(*,*) myrank, "test", cx, cz
+
+        write(1003, '(1(I5,","), 2(F20.8,","), 4(I5,","))') iglob_interface_table(i, 1), &
+                    cx, cz, iglob_interface_table(i, 2:NPROC+1)
+      enddo
+
+      close(1003)
+
+    end subroutine debug_assemble_dump_table
