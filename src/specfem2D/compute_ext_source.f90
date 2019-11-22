@@ -137,7 +137,9 @@
   integer :: ispec_p, num_modified_ele
   logical :: is_ispec_in
   integer :: loc_rank, loc_eleid
-
+  !double precision :: cx, cz
+  ! integer, dimension(num_iglob_interface) :: buffer_iglob
+  ! double precision, dimension(num_iglob_interface, 2) :: buffer_accel
 
   !write(IMAIN,*) "test 1"
 
@@ -208,10 +210,7 @@
           ! P-SV calculation
           do j = 1,NGLLZ
             do i = 1,NGLLX
-
               iglob = ibool(i,j,loc_eleid)
-
-              is_iglob_overlap = .false.
               ! find if the acceleration is already added to the iglob
               ! this process is essentially only needed for once in the beginning, but
               ! due to the readablility and not so efficient even if implementing subroutine
@@ -219,6 +218,7 @@
               ! iglob_add_accel_smooth_idlist (1,:) = iglob id
               ! iglob_add_accel_smooth_idlist (2,:) = number of adding acceleration at the iglob
               !write(IMAIN,*) "test 3", myrank
+              is_iglob_overlap = .false.
 
               do k = 1, iadd
                   !write(IMAIN,*) "test 2.1", myrank, iele(eleid)
@@ -244,9 +244,9 @@
                 ! this iglob already has value: it will be averaged
                 accel_elastic(1,iglob) = accel_elastic(1,iglob) + extsource(2,it,eleid)
                 accel_elastic(2,iglob) = accel_elastic(2,iglob) + extsource(3,it,eleid)
-              endif
-            enddo
-          enddo
+              endif ! if the iglob overlap in a single MPI domain
+            enddo ! do loop all gll point on an element
+          enddo ! do loop all gll point on an element
         else
           ! SH (membrane) calculation
           do j = 1,NGLLZ
@@ -273,7 +273,6 @@
                 ! this iglob already has value: it will be averaged
                 accel_elastic(1,iglob) = accel_elastic(1,iglob) + extsource(2,it,eleid)
               endif
-
             enddo
           enddo
         endif
@@ -296,6 +295,11 @@
     deallocate(iphase_elelist)
 
   enddo ! end do iphase
+
+  ! smooth between MPI domain
+#ifdef USE_MPI
+  call smooth_MPI_interface(accel_elastic)
+#endif
 
   end subroutine add_ext_source
 
@@ -386,6 +390,117 @@
     close(IIN)
 
   end subroutine setup_glob2loctable
+  !
+  !-----------------------------------------------------------------------------------
+  !
+  subroutine smooth_MPI_interface(accel_elastic)
+    ! inject the "source" from external source files
+
+    use my_mpi_communicator
+    use mpi
+    use constants, only: CUSTOM_REAL, IMAIN, NDIM, EXT_SOURCE_NUM_MAX, EXT_SOURCE_TRACE_MAX, &
+                        NGLLX,NGLLZ
+    use specfem_par, only: myrank, nglob, nspec, P_SV, ibool, coord, nspec_outer_elastic,phase_ispec_inner_elastic, &
+                      glob2loc_table, num_iglob_interface, coord_interface, iglob_interface_table
+
+    use shared_parameters, only: iele, number_of_extsource
+
+    implicit none
+
+    ! local parameters
+    integer :: i, j, k, iglob, eleid, ier
+    integer :: iphase, num_elements
+    real(kind=CUSTOM_REAL), dimension(NDIM,nglob),intent(inout) :: accel_elastic
+    integer, allocatable, dimension(:) :: iphase_elelist
+    integer :: ispec_p
+    logical :: is_ispec_in
+    integer :: loc_rank, loc_eleid
+    double precision :: cx, cz
+    integer, dimension(num_iglob_interface) :: buffer_iglob
+    double precision, dimension(num_iglob_interface, 2) :: buffer_accel
+    double precision, dimension(num_iglob_interface, 2) :: sum_accel
+
+    ! find gll points on interface in outer elements
+
+    buffer_iglob(:) = 0
+    buffer_accel(:,:) = 0._CUSTOM_REAL
+    sum_accel(:,:) = 0._CUSTOM_REAL
+
+    iphase = 1
+    num_elements = nspec_outer_elastic
+    allocate(iphase_elelist(num_elements))
+
+    ! make list of outer/inner elements
+    do ispec_p = 1,num_elements
+      iphase_elelist(ispec_p) = phase_ispec_inner_elastic(ispec_p,iphase)
+    enddo
+
+    do eleid = 1, number_of_extsource
+
+      is_ispec_in = .false.
+
+      do i = 1, nspec
+        if (glob2loc_table(i, 1) == iele(eleid)) then
+          loc_rank = glob2loc_table(i, 2)
+          loc_eleid = glob2loc_table(i, 3)
+          ! check if this local element is inner or outer
+          do ispec_p = 1,num_elements
+            if (iphase_elelist(ispec_p) == loc_eleid) then
+              is_ispec_in = .true.
+              exit
+            endif
+          enddo
+        endif
+      enddo
+
+      if (is_ispec_in) then
+        do j = 1,NGLLZ
+          do i = 1,NGLLX
+            iglob = ibool(i,j,loc_eleid)
+            cx    = coord(1, iglob) ! this iglob is local id in each MPI domain
+            cz    = coord(2, iglob) ! this iglob is local id in each MPI domain
+
+            do k = 1, num_iglob_interface
+              if (coord_interface(k, 1) .eq. cx .and. &
+                coord_interface(k, 2) .eq. cz) then
+                ! This GLL point is on the MPI interface. Process separately using the table.
+                !if (myrank==0) write(*,*) coord_interface(i1, 1) , coord_interface(i1, 2) , cx, cz
+                buffer_iglob(k) = iglob
+                buffer_accel(k, 1) = accel_elastic(1, iglob)
+                buffer_accel(k, 2) = accel_elastic(2, iglob)
+                exit
+              endif
+            enddo
+          enddo
+        enddo
+      endif
+    enddo
+
+    ! do i = 1, num_iglob_interface
+    !   if (myrank==0) write(IMAIN, *) myrank, ":",i, buffer_iglob(i), buffer_accel(i, 1), buffer_accel(i, 2)
+    ! enddo
+    ! reduce buffer_accel
+
+    call MPI_ALLREDUCE(buffer_accel,sum_accel,num_iglob_interface*2,MPI_DOUBLE_PRECISION, &
+                        MPI_SUM,my_local_mpi_comm_world,ier)
+
+
+    do i = 1, num_iglob_interface
+      !write(IMAIN, *) myrank, ":",i, buffer_iglob(i), sum_accel(i, 1), sum_accel(i, 2)
+      if (iglob_interface_table(i, myrank+2) == 1) then
+        ! This MPI domain has the shared point on MPI interface.
+        if (P_SV) then
+          accel_elastic(1, buffer_iglob(i)) = sum_accel(i, 1) / dble(iglob_interface_table(i, 1))
+          accel_elastic(2, buffer_iglob(i)) = sum_accel(i, 2) / dble(iglob_interface_table(i, 1))
+        else
+          accel_elastic(1, buffer_iglob(i)) = sum_accel(i, 1) / dble(iglob_interface_table(i, 1))
+        endif
+      endif
+    enddo
+
+    deallocate(iphase_elelist)
+
+  end subroutine smooth_MPI_interface
 
   !-----------------------------------------------------------------------------------
   ! The subroutines below are for the smoothing on iglob located at MPI interface.
@@ -451,7 +566,7 @@
 
       !-------!
       !Debug
-      call debug_dump_table(iglob_interface_table_temp,coord_interface_temp,num_iglob_temp)
+      !call debug_dump_table(iglob_interface_table_temp,coord_interface_temp,num_iglob_temp)
       !-------!
 
       ! allocate and fill out iglob_interface_table
@@ -459,7 +574,7 @@
 
       !-------!
       !Debug
-      call debug_assemble_dump_table()
+      !call debug_assemble_dump_table()
       !-------!
 
     else
@@ -474,70 +589,74 @@
 
     ! read glob2loctable for acceleration injection at coupling elements
     use constants, only: IMAIN, EXT_SOURCE_NUM_MAX, NGLLX,NGLLZ
-    use specfem_par, only: myrank, nspec, NPROC, glob2loc_table, nspec_inner_elastic, nspec_outer_elastic, &
+    use specfem_par, only: myrank, nspec, NPROC, glob2loc_table, nspec_outer_elastic, &
                           ibool, phase_ispec_inner_elastic, coord
     use shared_parameters, only: iele, number_of_extsource
 
     implicit none
 
-    integer :: i, i1, j1, k, eleid
+    integer :: i, i1, j1, k, k1, eleid
     integer, dimension(EXT_SOURCE_NUM_MAX * 3, NPROC + 1), intent(inout) :: iglob_interface_table_temp
     double precision, dimension(EXT_SOURCE_NUM_MAX*3, 2), intent(inout)  :: coord_interface_temp
     integer, intent(inout) :: num_iglob_temp
     integer, dimension(:), allocatable :: iphase_elelist
-    integer :: ispec_p, id_iglob_overlap, iglob, iphase, num_elements
+    double precision, dimension(EXT_SOURCE_NUM_MAX*3, 2) :: MPIdomain_duplication_list
+    integer :: ispec_p, id_iglob_overlap, iglob, num_elements, num_MPIdomain_duplication
     integer :: loc_rank, loc_eleid
     double precision :: cx, cz
+    logical :: is_MPIdomain_duplication
 
-    do iphase = 1, 1
 
-      ! choses inner/outer elements
-      if (iphase == 1) then
-        num_elements = nspec_outer_elastic
-      else
-        num_elements = nspec_inner_elastic
-      endif
+    ! choses outer elements
+    num_elements = nspec_outer_elastic
 
-      allocate(iphase_elelist(num_elements))
+    allocate(iphase_elelist(num_elements))
 
-      ! make list of outer/inner elements
-      do ispec_p = 1,num_elements
-        iphase_elelist(ispec_p) = phase_ispec_inner_elastic(ispec_p,iphase)
-      enddo
+    ! make list of outer elements
+    do ispec_p = 1,num_elements
+      iphase_elelist(ispec_p) = phase_ispec_inner_elastic(ispec_p,1)
+    enddo
 
-      ! Debug
-      write(IMAIN, *) myrank, ": coord size:" ,size(coord,2)
-      do ispec_p = 1,num_elements
-        do j1 = 1,NGLLZ
-          do i1 = 1,NGLLX
-            iglob = ibool(i1,j1,iphase_elelist(ispec_p))
-            write(IMAIN, *) coord(1,iglob), coord(2,iglob)
-          enddo
+    ! Debug
+    !write(IMAIN, *) myrank, ": coord size:" ,size(coord,2)
+    do ispec_p = 1,num_elements
+      do j1 = 1,NGLLZ
+        do i1 = 1,NGLLX
+          iglob = ibool(i1,j1,iphase_elelist(ispec_p))
+          !write(IMAIN, *) coord(1,iglob), coord(2,iglob)
         enddo
       enddo
+    enddo
 
-      ! ! make list of outer/inner elements
-      ! do ispec_p = 1, nspec_outer_elastic
-      !   iphase_elelist(ispec_p) = phase_ispec_inner_elastic(ispec_p,1)
-      ! enddo
+    num_MPIdomain_duplication = 0
+    do eleid = 1, number_of_extsource
+      do i = 1, nspec
+        if (glob2loc_table(i, 1) == iele(eleid)) then
+          loc_rank = glob2loc_table(i, 2)
+          loc_eleid = glob2loc_table(i, 3)
+          ! do search on outer elements
+          do ispec_p = 1,num_elements
+            ! check if this  element is outer
+            if (iphase_elelist(ispec_p) == loc_eleid) then
+              ! loop GLL points in coupling element
+              do j1 = 1,NGLLZ
+                do i1 = 1,NGLLX
+                  iglob = ibool(i1,j1,loc_eleid)
+                  cx = coord(1,iglob)
+                  cz = coord(2,iglob)
+                  id_iglob_overlap = 0
+                  ! search iglob in the present domain
 
-      do eleid = 1, number_of_extsource
-        do i = 1, nspec
-          if (glob2loc_table(i, 1) == iele(eleid)) then
-            loc_rank = glob2loc_table(i, 2)
-            loc_eleid = glob2loc_table(i, 3)
-            ! do search on outer elements
-            do ispec_p = 1,num_elements
-              ! check if this  element is outer
-              if (iphase_elelist(ispec_p) == loc_eleid) then
-                ! loop GLL points in coupling element
-                do j1 = 1,NGLLZ
-                  do i1 = 1,NGLLX
-                    iglob = ibool(i1,j1,loc_eleid)
-                    cx = coord(1,iglob)
-                    cz = coord(2,iglob)
-                    id_iglob_overlap = 0
-                    ! search iglob in the present domain
+                  is_MPIdomain_duplication = .false.
+                  do k1 = 1, num_MPIdomain_duplication
+                    if (MPIdomain_duplication_list(k1, 1) .eq. cx .and. &
+                      MPIdomain_duplication_list(k1, 2) .eq. cz) then
+                      id_iglob_overlap = -1
+                      is_MPIdomain_duplication = .true.
+                    endif
+                  enddo
+
+                  if (.not. is_MPIdomain_duplication) then
                     do k = 1, num_iglob_temp
                       !write(IMAIN,*) "test 2.1", myrank, iele(eleid)
                       if (coord_interface_temp(k, 1) .eq. cx .and. &
@@ -546,45 +665,56 @@
                         id_iglob_overlap = k
                         exit
                       endif
-                      !write(IMAIN,*) "test 2.2", myrank
-                    end do
+                    enddo
+                  endif
 
-                    if (id_iglob_overlap == 0) then
-                      ! this iglob is first time to add
-                      !write(IMAIN, *) "find id_iglob_overlap"
-                      num_iglob_temp = num_iglob_temp + 1
-                      ! iglob
-                      !iglob_interface_table_temp(num_iglob_temp, 1) = iglob
-                      ! coordinates
-                      coord_interface_temp(num_iglob_temp, 1) = cx
-                      coord_interface_temp(num_iglob_temp, 2) = cz
-                      ! num of overlap
-                      iglob_interface_table_temp(num_iglob_temp, 1) = &
-                          iglob_interface_table_temp(num_iglob_temp, 1) + 1
-                      ! MPI domain flag
-                      iglob_interface_table_temp(num_iglob_temp, myrank+2) = 1
-                    else
-                      ! this iglob already has value: it will be averaged
-                      iglob_interface_table_temp(id_iglob_overlap, 1) = &
-                          iglob_interface_table_temp(id_iglob_overlap, 1) + 1
+                  ! modify coord_interface_temp and iglob_interface_table_temp
+                  if (id_iglob_overlap == -1) then
+                    ! write(IMAIN,*) "test avoid duplication"
+                    ! write(IMAIN, *) cx, cz
 
-                      iglob_interface_table_temp(id_iglob_overlap, myrank+2) = 1
+                    continue
+                  elseif (id_iglob_overlap == 0) then
+                    ! this iglob is first time to add
+                    !write(IMAIN, *) "find id_iglob_overlap"
+                    num_iglob_temp = num_iglob_temp + 1
+                    ! coordinates
+                    coord_interface_temp(num_iglob_temp, 1) = cx
+                    coord_interface_temp(num_iglob_temp, 2) = cz
+                    ! num of overlap
+                    iglob_interface_table_temp(num_iglob_temp, 1) = &
+                        iglob_interface_table_temp(num_iglob_temp, 1) + 1
+                    ! MPI domain flag
+                    iglob_interface_table_temp(num_iglob_temp, myrank+2) = 1
+                    ! save iglob to avoid counting overlap within this MPIDomain
+                    num_MPIdomain_duplication = num_MPIdomain_duplication + 1
+                    MPIdomain_duplication_list(num_MPIdomain_duplication, 1) = cx
+                    MPIdomain_duplication_list(num_MPIdomain_duplication, 2) = cz
 
-                    endif !id_iglob_overlap
-                  enddo ! i1 NGLLX
-                enddo ! j1 NGLLZ
-              endif ! if outer
-            enddo ! do search within iphase_elelist
+                  else
+                    ! this iglob already has value: it will be averaged
+                    iglob_interface_table_temp(id_iglob_overlap, 1) = &
+                        iglob_interface_table_temp(id_iglob_overlap, 1) + 1
+                    iglob_interface_table_temp(id_iglob_overlap, myrank+2) = 1
 
-            exit ! exit nspec loop because this eleid is already found and processed
+                    ! avoid duplication in this MPIDomain
+                    num_MPIdomain_duplication = num_MPIdomain_duplication + 1
+                    MPIdomain_duplication_list(num_MPIdomain_duplication, 1) = cx
+                    MPIdomain_duplication_list(num_MPIdomain_duplication, 2) = cz
 
-          endif ! if this iele is in MPIDomain
-        enddo ! do search all elements within MPIDomain
-      enddo ! loop all coupling element
+                  endif !id_iglob_overlap
+                enddo ! i1 NGLLX
+              enddo ! j1 NGLLZ
+            endif ! if outer
+          enddo ! do search within iphase_elelist
 
-      deallocate(iphase_elelist)
+          exit ! exit nspec loop because this eleid is already found and processed
 
-    enddo
+        endif ! if this iele is in MPIDomain
+      enddo ! do search all elements within MPIDomain
+    enddo ! loop all coupling element
+
+    deallocate(iphase_elelist)
 
     end subroutine find_iglob_on_interface
 
@@ -742,7 +872,7 @@
             iglob_interface_table(numoverlap, j) = iglob_interface_table_temp(i, j)
             !write(IMAIN,*)  "test find numoverlap in table:", iglob_interface_table(numoverlap, j)
           enddo
-          write(IMAIN,*) iglob_interface_table(numoverlap,1:NPROC+1)
+          !write(IMAIN,*) iglob_interface_table(numoverlap,1:NPROC+1)
           coord_interface(numoverlap, 1) = coord_interface_temp(i, 1)
           coord_interface(numoverlap, 2) = coord_interface_temp(i, 2)
 
@@ -752,8 +882,8 @@
         endif
       enddo
 
-      write(IMAIN,*) "myrank: ", myrank
-      write(IMAIN,*) coord_interface
+      !write(IMAIN,*) "myrank: ", myrank
+      !write(IMAIN,*) coord_interface
     end subroutine assemble_iglob_interface_table
     !
     !-----------------------------------------------------------------------------------
@@ -774,7 +904,7 @@
       character(len=200) :: foname
 
       write(foname, "(A23,I0.3,A4)") "debug_iglob_interface_table_temp_", myrank,".csv"
-      write(IMAIN, *) foname
+      !write(IMAIN, *) foname
       open(unit=1002,file=trim(OUTPUT_FILES)//foname,status='unknown',iostat=ier)
       if (ier /= 0 ) then
         call stop_the_code('Error saving debug iglob_interface_table_temp.csv')

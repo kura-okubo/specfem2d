@@ -125,7 +125,7 @@ rec_xmin                        = -10.48d3 # bottom-left corner of box
 rec_zmin                        = -3.1d3 # bottom-left corner of box
 rec_xmax                        = 10.48d3  # top-right corner of box
 rec_zmax                        = 3.1d3  # top-right corner of box
-rec_dx                          = 300.0   # Threshold of diference in distance from box line.
+rec_dx                          = 600.0   # Threshold of diference in distance from box line.
 
 #-----------------------------------------------------------------------------
 #

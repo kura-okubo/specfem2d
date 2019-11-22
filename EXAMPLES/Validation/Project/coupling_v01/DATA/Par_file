@@ -17,7 +17,7 @@ NOISE_TOMOGRAPHY                = 0
 SAVE_FORWARD                    = .false.
 
 # parameters concerning partitioning
-NPROC                           = 1              # number of processes
+NPROC                           = 4              # number of processes
 partitioning_method             = 3              # SCOTCH = 3, ascending order (very bad idea) = 1
 
 # number of control nodes per element (4 or 9)
@@ -115,7 +115,7 @@ add_Bielak_conditions_left      = .false.
 ACOUSTIC_FORCING                = .false.        # acoustic forcing of an acoustic medium with a rigid interface
 
 # ing with HOSS
-COUPLING_IN                     = .true.         # please define dummy number below even if this is false
+COUPLING_IN                     = .false.         # please define dummy number below even if this is false
 COUPLING_SHAPE                  = rectangle      # rectangle or circle
 extori_x                        = 0.0d0            # x origin of coupling source region
 extori_z                        = 0.0d0       # z origin of coupling source region
