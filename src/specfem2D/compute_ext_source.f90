@@ -46,7 +46,7 @@
     integer :: i, j
     integer :: ier
     character(len=MAX_STRING_LEN):: line
-    integer, dimension(1) :: ibuf_num
+    integer, dimension(2) :: ibuf_num
 
     number_of_extsource = 0
 
@@ -86,6 +86,7 @@
 
     if (myrank == 0) then
       ibuf_num(1) = number_of_extsource
+      ibuf_num(2) = 0 ! # avoid error with ifort
       do i = 1, NPROC-1
         call send_singlei(ibuf_num, i, 1)
         do j = 1, number_of_extsource
@@ -835,7 +836,7 @@
 
       ! read glob2loctable for acceleration injection at coupling elements
       use constants, only: IMAIN, EXT_SOURCE_NUM_MAX, CUSTOM_REAL
-      use specfem_par, only: myrank, NPROC, iglob_interface_table, coord_interface, num_iglob_interface
+      use specfem_par, only: NPROC, iglob_interface_table, coord_interface, num_iglob_interface
 
       implicit none
 

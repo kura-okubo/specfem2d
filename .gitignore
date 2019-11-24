@@ -74,6 +74,7 @@ EXAMPLES/Validation/*/extsource/
 EXAMPLES/Validation/Project/*/OUTPUT_FILES*
 EXAMPLES/Validation/Project/*/extsource/
 EXAMPLES/Validation/Project/*/HOSScoupling/
+EXAMPLES/Validation/Project/_*
 
 #docs
 doc/call_trees_of_the_source_code/html/*
