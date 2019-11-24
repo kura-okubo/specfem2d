@@ -46,7 +46,7 @@
     integer :: i, j
     integer :: ier
     character(len=MAX_STRING_LEN):: line
-    integer, dimension(2) :: ibuf_num
+    integer :: ibuf_num
 
     number_of_extsource = 0
 
@@ -85,8 +85,7 @@
     endif
 
     if (myrank == 0) then
-      ibuf_num(1) = number_of_extsource
-      ibuf_num(2) = 0 ! # avoid error with ifort
+      ibuf_num = number_of_extsource
       do i = 1, NPROC-1
         call send_singlei(ibuf_num, i, 1)
         do j = 1, number_of_extsource
@@ -95,7 +94,7 @@
       enddo
     else
       call recv_singlei(ibuf_num, 0, 1)
-      number_of_extsource = ibuf_num(1)
+      number_of_extsource = ibuf_num
       do j = 1, number_of_extsource
         call recv_i(iele,j, 0, 2)
       enddo
