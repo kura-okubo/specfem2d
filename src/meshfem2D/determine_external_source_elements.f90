@@ -141,11 +141,15 @@
     write(30, *) "# index of element, dt, cx, cz"
     write(30, *) "#"
     write(30, *) "# How to coupling:"
-    write(30, *) "# You need to obtain accerelation time series at cx, cz with dt, from other numerical solution."
-    write(30, *) "# Then, please make input files named as 'EXTXXXXXXXX.dat' (XXXXXXXX is index of element with zero padding)."
+    write(30, *) "# You need to obtain accerelation time series at"
+    write(30, *) "# cx, cz with dt, from other numerical solution."
+    write(30, *) "# Then, please make input files named as"
+    write(30, *) "# 'EXTXXXXXXXX.dat' (XXXXXXXX is index of element"
+    write(30, *) "# with zero padding)."
     write(30, *) "# (Ex. EXT00000012.dat)"
     write(30, *) "# The contents should be t, ax, az"
-    write(30, *) "# Then, please make 'extsource' directory at the same directory with 'run_***.sh' (where you run the specfem)"
+    write(30, *) "# Then, please make 'extsource' directory at the same"
+    write(30, *) "# directory with 'run_***.sh' (where you run the specfem)"
     write(30, *) "# and locate all EXT********.dat files in the directory."
     write(30, *) "#-----------------------------------------------#"
 
@@ -189,11 +193,11 @@
             !write(IMAIN,*) "This element goes to source element.", cx, cz, elecoords(1,1), elecoords(2,1)
             num_sourceele = num_sourceele + 1
 
-            write(20, "(A,I6,A,1F20.8,A,1F20.8,A,1F20.8,A,1F20.8,A)") "set object ", num_sourceele, &
+            write(20, "(A,I8,A,1F20.8,A,1F20.8,A,1F20.8,A,1F20.8,A)") "set object ", num_sourceele, &
             " rect from ", elecoords(1,1), ",", elecoords(2,1), " to ", elecoords(1,3), ",", elecoords(2,3), &
             " fc rgb 'red'"
 
-            write(30, "(I6,',',1F20.8,',',1F20.8,',',1F20.8)") iele, DT, cx, cz
+            write(30, "(I8,',',1F20.8,',',1F20.8,',',1F20.8)") iele, DT, cx, cz
 
           endif
 
@@ -229,10 +233,10 @@
             !write(IMAIN,*) "This element goes to source element.", cx, cz, elecoords(1,1), elecoords(2,1)
             num_sourceele = num_sourceele + 1
 
-            write(20, "(A,I6,A,1F20.8,A,1F20.8,A,1F20.8,A,1F20.8,A)") "set object ", num_sourceele, &
+            write(20, "(A,I8,A,1F20.8,A,1F20.8,A,1F20.8,A,1F20.8,A)") "set object ", num_sourceele, &
             " rect from ", elecoords(1,1), ",", elecoords(2,1), " to ", elecoords(1,3), ",", elecoords(2,3), &
             " fc rgb 'red'"
-            write(30, "(I6,',',1F20.8,',',1F20.8,',',1F20.8)") iele, DT, cx, cz
+            write(30, "(I8,',',1F20.8,',',1F20.8,',',1F20.8)") iele, DT, cx, cz
             exit
           endif
         enddo

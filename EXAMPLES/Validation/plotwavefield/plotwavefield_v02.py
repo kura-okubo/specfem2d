@@ -10,7 +10,7 @@ import os
 import sys
 from scipy.interpolate import griddata
 from scipy.interpolate import RectBivariateSpline
-
+import gc
 import time
 #from mpi4py import MPI
 import matplotlib.pyplot as plt
@@ -27,23 +27,92 @@ def plot_wavefield(fname):
 
 	framenumber = int(fname[9:16])
 
+	if ('minframe' in vars()) and ('maxframe' in vars()):
+		# plot only frames within minframe and maxframe
+		if (framenumber < minframe) or (framenumber > maxframe):
+			return;
+
+	# avoid overwrite
+	if not Overwrite:
+		foverwrite = Inputdir+"/../snapshot_wavefield/"+"wavefield%0.7d.png"%framenumber
+		if os.path.isfile(foverwrite):
+			return;
+
 	# read vectors
 	fi = open(Inputdir+"/"+fname, 'rb')
 	vec = np.fromfile(file=fi, dtype=np.float32)
 	fi.close()
 	num_of_nodes = round(coord.size/2)
 
+	# correct artifacts in velocity due to discontinuity in the source region
+	vec_ref = [] # to avoid error with JIT
+	if Is_correct_discountinuity:
+		fname_ref="wavefield%0.7d_01.bin"%correct_discountinuity_frame
+		if not os.path.isfile(Inputdir+"/"+fname_ref):
+			print("error: correct artifacts reference frame does not exist.")
+			sys.exit(1)
+		fi = open(Inputdir+"/"+fname_ref, 'rb')
+		vec_ref = np.fromfile(file=fi, dtype=np.float32)
+		fi.close()
+
+
 	nid = 0
-	vec_x = np.zeros(num_of_nodes)
-	vec_z = np.zeros(num_of_nodes)
 	mag = np.zeros(num_of_nodes)
+
 	for i in range(num_of_nodes):
 		xid = 2*i
 		zid = 2*i+1
-		vec_x[nid] = vec[xid]
-		vec_z[nid] = vec[zid]
-		#mag[nid] = np.linalg.norm([vec[xid], vec[zid]])
-		mag[nid]   = math.sqrt(vec[xid]**2 + vec[zid]**2)
+
+		if plotmode == 'mag':
+			mag[nid]   = math.sqrt(vec[xid]**2 + vec[zid]**2)
+		elif plotmode == 'divergence':
+			print("not implemented.")
+		elif plotmode == 'curl':
+			print("not implemented.")
+		else:
+			print("plotmode should be mag, divergence or curl.")
+			sys.exit(1)
+
+		if Is_correct_discountinuity and (DT*framenumber >= correct_starttime):
+			if plotmode == 'mag':
+				mag_ref   = math.sqrt(vec_ref[xid]**2 + vec_ref[zid]**2)
+			elif plotmode == 'divergence':
+				print("not implemented.")
+			elif plotmode == 'curl':
+				print("not implemented.")
+			else:
+				print("plotmode should be mag, divergence or curl.")
+				sys.exit(1)
+			# subtract residual velocity field caused by discontinuity in source regioin
+			if (mag_ref > 0.1*cmin):
+				mag[nid] = abs(mag[nid] - mag_ref)
+
+				#mag_ref = 0.1*cmin # avoid invalid subtraction
+
+			#mag[nid] = abs(mag[nid] - mag_ref)
+			#mag[nid] = abs(mag_ref)
+
+		if zeropad_sourceregion:
+
+			cox = coord_x[i]
+			coz = coord_z[i]
+
+			if COUPLING_SHAPE == "circle":
+				if (math.sqrt((cox-extori_x)**2 + (coz-extori_z)**2)) <= R_ext:
+					mag[nid] = 0.9*cmin
+
+			elif COUPLING_SHAPE == "rectangle":
+				if (rec_xmin<=cox and rec_xmax>=cox and
+					rec_zmin<=coz and rec_zmax>=coz):
+					mag[nid] = 0.9*cmin
+
+		#debug
+		# eps = 1e-3;
+		# cox = coord_x[i]
+		# coz = coord_z[i]
+		# if (math.sqrt((cox - 12e3)**2) < eps) and (math.sqrt((coz - 0.0)**2) < eps):
+		# 	print("debug: %12.8e, %12.8e, %12.8e, %12.8e, %12.8e"%(cox, coz,vec_x[nid], vec_z[nid],mag[nid]))
+
 		nid = nid + 1
 
 	# avoid log10(0)
@@ -128,12 +197,13 @@ def plot_wavefield(fname):
 	plt.xlabel('x (km)', fontsize=fontsize, family=fontfamily)
 	plt.ylabel('y (km)', fontsize=fontsize, family=fontfamily)
 	t1 = DT*framenumber
-	ax.set_title('Farfield radiation: T = %6.2f'%t1, fontsize=fontsize, color="black", family=fontfamily)
+	ax.set_title('Far-field radiation: T = %6.2f'%t1, fontsize=fontsize, color="black", family=fontfamily)
 	plt.setp(plt.gca().get_yticklabels(), fontsize=fontsize, color="black", family=fontfamily)
 	plt.setp(plt.gca().get_xticklabels(), fontsize=fontsize, color="black", family=fontfamily)
 
 	#colorbar
-	L = np.linspace(cmin, cmax, 5) #(m/s)
+	#L = np.linspace(cmin, cmax, 5) #(m/s)
+	L = [0.01, 0.02, 0.05, 0.1, 0.2, 0.4, 1.0, 1.5, 2.0] #(m/s)
 	Lstr = [str(round(s, 2))for s in L]
 	Ltick = np.log10(L);
 
@@ -141,7 +211,7 @@ def plot_wavefield(fname):
 	m1 = plt.cm.ScalarMappable(cmap=cm)
 	m1.set_array(zq)
 	m1.set_clim(clogmin, clogmax)
-	cbar = fig.colorbar(m1, orientation='horizontal', shrink=0.7, format="%.2f")
+	cbar = fig.colorbar(m1, orientation='horizontal', shrink=0.7, format="%.2f", pad=0.1)
 	cbar.set_label(r"Particle velocity magnitude (m/s)", fontsize=fontsize, family=fontfamily)
 	cbar.ax.tick_params(labelsize=0.8*fontsize)
 	cbar.set_ticks(Ltick)  # vertically oriented colorbar
@@ -163,6 +233,7 @@ def plot_wavefield(fname):
 
 	#print("%s done by process %d of %d on %s." % (fname, rank, NumOfProcessors, name))
 
+	gc.collect()
 	print("Computation time: %8.4f, %8.4f, %8.4f"%(tt2-tt1, tt3-tt2, tt4-tt3))
 
 	return 0
@@ -174,20 +245,42 @@ def plot_wavefield(fname):
 #---parameters---#
 Inputdir = "../Project/_coupling_v05_discontinuum_largedomain/OUTPUT_FILES_C" # path to where wavefield_grid_for_dumps is located
 
-plotresolution = 400 # number of grid par space
+plotresolution = 1000 # number of grid par space: large number takes long time for output
 method = 'linear' #'cubic'
 
-colormapname = 'pararainbow.json'
+colormapname = 'paracooltowarm.json' #paracoolwarm pararainbow
 IscolormapInverse = 0
 contourlevels=400
 fontfamily='arial'
 fontsize = 20
-cmax = 0.6
-cmin = 0.2 * cmax
+cmax = 2.0 #0.4
+cmin = 0.4 #0.025 * cmax
 
 DT = 2.5e-3 # same with Par_file
 
+# zeropadding source region
+zeropad_sourceregion = True # zero padding source region
+COUPLING_SHAPE       = "rectangle"      # rectangle or circle
+extori_x             = 0.0            # x origin of coupling source region
+extori_z             = 0.0       # z origin of coupling source region
+R_ext                = 5000.0       # Radius of coupling source elements: Need to compute source within this radius by the other numerical software
+dR_ext               = 250.0        # Threshold of diference in distance (R-norm(cx, cz)) to detect source element: normally dx/2 works
+rec_xmin             = -11.0e3 # -10.48e3 # bottom-left corner of box
+rec_zmin             = -4.0e3 #-3.5e3  #-3.1e3 # bottom-left corner of box
+rec_xmax             = 11.0e3 #10.48e3  # top-right corner of box
+rec_zmax             = 4.0e3 #3.5e3 #3.1e3  # top-right corner of box
+rec_dx               = 120.0   # Threshold of diference in distance from box line.
+
+# correct artifacts due to discontinuity in the source region
+Is_correct_discountinuity = True
+correct_discountinuity_frame = 19000 # reference frame where velocity field is equillibrium but non_zero due to fractures
+correct_starttime = 6.0 # start correcting the discontinuity effect: should be after the faulting process
+plotmode = 'mag' #'mag', 'divergence' and 'curl'
+minframe = 0 #4380 #2340 #0
+maxframe = 20 #4500 #2440 #16000
+
 SaveFigure = True
+Overwrite = True
 FileFormat = 'png'
 PlotFigure = False # This must be false if using MPI
 #----------------#

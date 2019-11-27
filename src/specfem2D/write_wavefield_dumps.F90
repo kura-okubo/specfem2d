@@ -64,7 +64,7 @@
 
   integer :: iproc              ! counter over MPI process
   integer :: gcounter           ! index counter for variable send/receive counts
-  integer :: ii,jj,kk              ! Loop counters
+  integer :: ii,jj,kk, ii1, jj1              ! Loop counters
 
   integer :: dummy
 
@@ -108,8 +108,22 @@
     icounter = 0
     mask_ibool(:) = .false.
     do ispec = 1,nspec
-      do jj = 1,NGLLZ
-        do ii = 1,NGLLX
+    ! do jj = 1,NGLLZ
+    !   do ii = 1,NGLLX
+      do jj1 = 1,2
+        do ii1 = 1,2
+          if (jj1 == 1) then
+            jj = 1
+          else
+            jj = NGLLZ
+          endif
+
+          if (ii1 == 1) then
+            ii = 1
+          else
+            ii = NGLLX
+          endif
+          
           iglob = ibool(ii,jj,ispec)
           if (.not. mask_ibool(iglob)) then
             icounter = icounter + 1
@@ -236,8 +250,23 @@
   icounter = 0
   mask_ibool(:) = .false.
   do ispec = 1,nspec
-    do jj = 1,NGLLZ
-      do ii = 1,NGLLX
+    !do jj = 1,NGLLZ
+      !do ii = 1,NGLLX
+    do jj1 = 1,2
+      do ii1 = 1,2
+
+        if (jj1 == 1) then
+          jj = 1
+        else
+          jj = NGLLZ
+        endif
+
+        if (ii1 == 1) then
+          ii = 1
+        else
+          ii = NGLLX
+        endif
+
         iglob = ibool(ii,jj,ispec)
         if (.not. mask_ibool(iglob)) then
           icounter = icounter + 1
