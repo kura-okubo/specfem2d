@@ -701,6 +701,7 @@ module specfem_par
   integer, dimension(:, :), allocatable :: iglob_interface_table
   double precision, dimension(:, :), allocatable :: coord_interface
   integer :: num_iglob_interface
+  integer :: num_extsource_timestep
 
 end module specfem_par
 

@@ -145,7 +145,7 @@
 
   ! Initialized full extsource array
   if (it == 1) then
-    allocate(extsource(3,EXT_SOURCE_TRACE_MAX,EXT_SOURCE_NUM_MAX))
+    allocate(extsource(2,NSTEP,EXT_SOURCE_NUM_MAX))
     extsource(:,:,:) = 0._CUSTOM_REAL
   endif
 
@@ -234,16 +234,16 @@
               if (.not. is_iglob_overlap) then
                 ! this iglob is first time to add
 
-                accel_elastic(1,iglob) = extsource(2,it,eleid)
-                accel_elastic(2,iglob) = extsource(3,it,eleid)
+                accel_elastic(1,iglob) = extsource(1,it,eleid)
+                accel_elastic(2,iglob) = extsource(2,it,eleid)
                 iadd = iadd + 1
                 iglob_add_accel_smooth_idlist(1, iadd) = iglob
                 iglob_add_accel_smooth_idlist(2, iadd) = 1
 
               else
                 ! this iglob already has value: it will be averaged
-                accel_elastic(1,iglob) = accel_elastic(1,iglob) + extsource(2,it,eleid)
-                accel_elastic(2,iglob) = accel_elastic(2,iglob) + extsource(3,it,eleid)
+                accel_elastic(1,iglob) = accel_elastic(1,iglob) + extsource(1,it,eleid)
+                accel_elastic(2,iglob) = accel_elastic(2,iglob) + extsource(2,it,eleid)
               endif ! if the iglob overlap in a single MPI domain
             enddo ! do loop all gll point on an element
           enddo ! do loop all gll point on an element
@@ -264,14 +264,14 @@
 
               if (.not. is_iglob_overlap) then
                 ! this iglob is first time to add
-                accel_elastic(1,iglob) = extsource(2,it,eleid)
+                accel_elastic(1,iglob) = extsource(1,it,eleid)
                 iadd = iadd + 1
                 iglob_add_accel_smooth_idlist(1, iadd) = iglob
                 iglob_add_accel_smooth_idlist(2, iadd) = 1
 
               else
                 ! this iglob already has value: it will be averaged
-                accel_elastic(1,iglob) = accel_elastic(1,iglob) + extsource(2,it,eleid)
+                accel_elastic(1,iglob) = accel_elastic(1,iglob) + extsource(1,it,eleid)
               endif
             enddo
           enddo
@@ -308,14 +308,15 @@
     ! reads in time series based on external source files
     use constants, only: CUSTOM_REAL, EXT_SOURCE_NUM_MAX, EXT_SOURCE_TRACE_MAX
     use shared_input_parameters, only: DT
+    use specfem_par, only: NSTEP
 
     implicit none
 
     ! local parameters
     integer, intent(in) :: extsource_eleid, extsource_globalid
-    double precision, dimension(3,EXT_SOURCE_TRACE_MAX,EXT_SOURCE_NUM_MAX), intent(inout) :: extsource
+    double precision, dimension(2,NSTEP,EXT_SOURCE_NUM_MAX), intent(inout) :: extsource
     integer :: tid, ier
-    double precision :: t_temp, ax_temp, az_temp
+    double precision :: t_temp, t1, t2, ax_temp, az_temp
     character(len=200):: source_timeseries_name
 
     ! read external source element
@@ -334,14 +335,17 @@
           call stop_the_code('External source has NaN value. Please check the external source files.')
         endif
         tid = tid + 1
-        extsource(1, tid, extsource_eleid) = t_temp
-        extsource(2, tid, extsource_eleid) = ax_temp
-        extsource(3, tid, extsource_eleid) = az_temp
+
+        if (tid == 1) t1 = t_temp
+        if (tid == 2) t2 = t_temp
+
+        extsource(1, tid, extsource_eleid) = ax_temp
+        extsource(2, tid, extsource_eleid) = az_temp
       endif
     enddo
 
     ! timestep check
-    if (abs((extsource(1, 2, extsource_eleid) - extsource(1, 1, extsource_eleid)) - DT) > 1.d-4*DT) then
+    if (abs((t2- t1) - DT) > 1.d-4*DT) then
       call stop_the_code('Time step of external source is diferent with input file. Please check the time step.')
     endif
 
