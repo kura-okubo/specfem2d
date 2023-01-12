@@ -8,7 +8,7 @@ fname="../OUTPUT_FILES_grid/externalsource.txt"
 fi = open(fname,'r')
 temp_df = pd.read_csv(fi,  header=None, engine='python', sep =',', comment='#')
 fi.close()
-temp = temp_df.as_matrix()
+temp = temp_df.falues
 iele = temp[:,0]
 DT = temp[:,1]
 cx = temp[:,2]
@@ -34,5 +34,6 @@ with open("../DATA/STATIONS", 'w') as fo:
 # plot locations
 plt.plot(cx,cz,'bv')
 plt.plot(val_cx,val_cz,'rv')
-plt.axes().set_aspect('equal', 'datalim')
+ax=plt.gca()
+ax.set_aspect('equal', 'datalim')
 plt.show()

@@ -8,7 +8,7 @@ fname="../OUTPUT_FILES_grid/externalsource.txt"
 fi = open(fname,'r')
 temp_df = pd.read_csv(fi,  header=None, engine='python', sep =',', comment='#')
 fi.close()
-temp = temp_df.as_matrix()
+temp = temp_df.values
 iele = temp[:,0]
 DT = temp[:,1]
 cx = temp[:,2]
@@ -25,14 +25,14 @@ for i in range(NumofCE):
 	with open("../OUTPUT_FILES_P/AA.S%04d.BXX.sema"%i, 'r') as fi:
 		temp_df = pd.read_csv(fi,  header=None, engine='python', delim_whitespace=True, comment='#')
 
-	temp	= temp_df.as_matrix()
+	temp	= temp_df.values
 	tx 		= temp[:,0]
 	ax 		= temp[:,1]
 
 	with open("../OUTPUT_FILES_P/AA.S%04d.BXZ.sema"%i, 'r') as fi:
 		temp_df = pd.read_csv(fi,  header=None, engine='python', delim_whitespace=True, comment='#')
 
-	temp	= temp_df.as_matrix()
+	temp	= temp_df.values
 	tz 		= temp[:,0]
 	az 		= temp[:,1]
 
