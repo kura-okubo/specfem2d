@@ -2,10 +2,11 @@
 
 ### This fork is extended from the original source (https://github.com/geodynamics/specfem2d.git) to couple specfem2D with another numerical framework to model dynamic earthquake rupture. An acceleration time series can be given explicitly as the source of a specfem2D simulation.
 
-**See <http://htmlpreview.github.io/?https://github.com/kura-okubo/specfem2d/blob/master/EXAMPLES/Validation/note/Note_of_Specfem2DCoupling.html>**
+**See <http://htmlpreview.github.io/?https://github.com/kura-okubo/specfem2d/blob/coupling-v8.1.0/EXAMPLES/Validation/note/Note_of_Specfem2DCoupling.html>**
 
 Ported from v7.0.0 to upstream **v8.1.0**; see [PORTING_v7_to_v8.md](PORTING_v7_to_v8.md)
-for what changed and how it was validated.
+for what changed and how it was validated. The `master` branch is the original
+v7.0.0-based version, kept as an archive.
 
 [![DOI](https://zenodo.org/badge/14293189.svg)](https://zenodo.org/badge/latestdoi/14293189)<br>
 
