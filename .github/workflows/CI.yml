@@ -25,9 +25,18 @@ jobs:
         else
           # Push
           echo "Push request:"
-          git fetch origin ${{ github.event.before }} --depth=1
-          export DIFF=$( git diff --name-only ${{ github.event.before }} $GITHUB_SHA )
-          echo "  diff between ${{ github.event.before }} and $GITHUB_SHA"
+          BEFORE="${{ github.event.before }}"
+          # On the first push of a new branch there is no "before" commit: the
+          # event carries the null SHA, and fetching it fails and takes the whole
+          # workflow with it. Fall back to the files of the pushed commit.
+          if [ -n "$BEFORE" ] && [ "$BEFORE" != "0000000000000000000000000000000000000000" ] \
+             && git fetch origin "$BEFORE" --depth=1 2>/dev/null; then
+            export DIFF=$( git diff --name-only $BEFORE $GITHUB_SHA )
+            echo "  diff between $BEFORE and $GITHUB_SHA"
+          else
+            export DIFF=$( git show --name-only --format= $GITHUB_SHA )
+            echo "  new branch: files of $GITHUB_SHA"
+          fi
         fi
         echo "***"; echo "$DIFF"; echo "***"
         # Escape newlines (replace \n with %0A)
