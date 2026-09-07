@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
 
     - name: Check for changes
       id: diff
@@ -95,7 +95,7 @@ jobs:
     needs: changesCheck
 
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
 
     - name: Install dependencies
       run: |
@@ -123,6 +123,9 @@ jobs:
         echo "OMPI_MCA_btl=self,tcp" >> $GITHUB_ENV
         # exports for xterm output (for make tests)
         echo "TERM=xterm" >> $GITHUB_ENV
+        ## configure does not search the Homebrew prefix, so `make tests` -- which
+        ## runs `configure --with-mpi` itself -- cannot find mpi.h without this
+        echo "MPI_INC=$(brew --prefix open-mpi)/include" >> $GITHUB_ENV
         echo ""
         echo "exports:"
         export
@@ -145,10 +148,10 @@ jobs:
 
     strategy:
       matrix:
-        os: [ubuntu-latest,ubuntu-20.04]
+        os: [ubuntu-latest,ubuntu-22.04]
 
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
 
     - name: Install packages
       run: ./.github/scripts/run_install.sh
@@ -161,149 +164,13 @@ jobs:
       run: make -j2 all
 
 
-  linuxCheck-Intel:
-    name: Test Intel on ubuntu-20.04
-    runs-on: ubuntu-20.04
-    needs: changesCheck
-
-    steps:
-    - uses: actions/checkout@v3
-
-    - name: Cache Intel oneapi packages
-      id: cache-intel-oneapi
-      uses: actions/cache@v3
-      with:
-        path: /opt/intel/oneapi
-        key: install-${{ runner.os }}-all
-
-    - name: Install packages
-      if: steps.cache-intel-oneapi.outputs.cache-hit != 'true'
-      run: |
-        wget https://apt.repos.intel.com/intel-gpg-keys/GPG-PUB-KEY-INTEL-SW-PRODUCTS-2023.PUB
-        sudo apt-key add GPG-PUB-KEY-INTEL-SW-PRODUCTS-2023.PUB
-        echo ""
-        sudo echo "deb https://apt.repos.intel.com/oneapi all main" | sudo tee /etc/apt/sources.list.d/oneAPI.list
-        sudo apt-get update
-        echo ""
-        # info
-        #sudo -E apt-cache pkgnames intel | grep intel-oneapi
-        #echo ""
-        echo "installing packages intel oneapi:"
-        sudo apt-get install -y intel-oneapi-compiler-fortran-2023.2.2 intel-oneapi-compiler-dpcpp-cpp-and-cpp-classic-2023.2.2 intel-oneapi-mpi intel-oneapi-mpi-devel
-        echo ""
-
-    - name: compiler infos
-      run: |
-        echo ""
-        source /opt/intel/oneapi/setvars.sh
-        echo ""
-        echo "compiler versions:"
-        echo "icx --version"
-        which icx
-        icx --version
-        echo ""
-        echo "icc --version"
-        which icc
-        icc --version
-        echo ""
-        echo "ifx --version"
-        which ifx
-        ifx --version
-        echo ""
-        echo "ifort --version"
-        which ifort
-        ifort --version
-        echo ""
-        echo "mpiifort --version"
-        which mpiifort
-        mpiifort --version
-        echo ""
-        echo "mpif90 --version"
-        which mpif90
-        mpif90 --version
-        echo ""
-        # infos
-        which ifort
-        which icc
-        which mpiifort
-        echo "mpirun:"
-        which mpirun
-        echo ""
-        # intel setup for running tests
-        echo ""
-        echo "replacing mpif90 with mpiifort link:"
-        sudo ln -sf $(which mpiifort) $(which mpif90)
-        mpif90 --version
-        echo ""
-        # debug
-        #export I_MPI_DEBUG=5,pid,host
-        #export I_MPI_LIBRARY_KIND=debug
-        # remove -ftrapuv which leads to issues for running tests
-        sed -i "s/-ftrapuv//g" flags.guess
-        # environment setting
-        export TERM=xterm
-        # export info
-        echo "exports:"
-        export
-        echo ""
-        echo ""
-        printenv >> $GITHUB_ENV
-        echo "CXX=icpc" >> $GITHUB_ENV
-        echo "CC=icc" >> $GITHUB_ENV
-        echo "FC=ifort" >> $GITHUB_ENV
-        echo ""
-
-    - name: configure debug
-      run: |
-        ./configure --enable-debug FC=ifort CC=icc
-
-    - name: make debug
-      run: |
-        make -j2 all
-        make -j2 all --always-make
-        make clean
-
-    - name: configure
-      run: |
-        ./configure FC=ifort CC=icc
-
-    - name: make
-      run: |
-        make -j2 all
-        make clean
-
-    - name: configure parallel debug
-      run: |
-        ./configure --enable-debug --with-mpi FC=ifort CC=icc MPIFC=mpiifort MPI_INC="${I_MPI_ROOT}/include"
-
-    - name: make parallel debug
-      run: |
-        make -j2 all
-        make -j2 all --always-make
-        make clean
-
-    - name: configure parallel
-      run: |
-        ./configure --with-mpi FC=ifort CC=icc MPIFC=mpiifort MPI_INC="${I_MPI_ROOT}/include"
-
-    - name: make parallel
-      run: |
-        make -j2 all
-        make clean
-
-    # note: fails with -ftrapuv flag due to MPI issue on virtual nodes
-    - name: make tests
-      run: |
-        make tests
-
-
   linuxTest_0:
     name: Test run - make tests (incl. coupling validation)
     runs-on: ubuntu-latest
     needs: [linuxCheck]
 
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
 
     - name: Install packages
       run: ./.github/scripts/run_install.sh

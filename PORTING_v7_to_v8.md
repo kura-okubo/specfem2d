@@ -304,12 +304,32 @@ POSIX shell: the two `pandas` helper scripts are replaced by `awk`, and `sed -i`
 is wrapped in a `sedi()` that works with both GNU and BSD `sed` (upstream's
 tests assume GNU `sed` and rely on CI installing `gnu-sed` on macOS).
 
-`.github/workflows/CI.yml` keeps `changesCheck`, `macosCheck`, `linuxCheck`,
-`linuxCheck-Intel` and the `make tests` job. The eleven `linuxTest_1..11` jobs
-were removed: each ran one of the deleted examples through
-`.github/scripts/run_tests.sh`, which needs a `run_this_example.sh` and a
-`REF_SEIS/` that no Validation example has. That script is left in place,
-unused, in case examples ever come back.
+`.github/workflows/CI.yml` keeps `changesCheck`, `macosCheck`, `linuxCheck` and
+the `make tests` job. The eleven `linuxTest_1..11` jobs were removed: each ran
+one of the deleted examples through `.github/scripts/run_tests.sh`, which needs
+a `run_this_example.sh` and a `REF_SEIS/` that no Validation example has. That
+script is left in place, unused, in case examples ever come back.
+
+Four more things had to change before the workflow would go green, none of them
+caused by this port:
+
+* `changesCheck` fetched `github.event.before` unconditionally. On the first
+  push of a new branch that is the null SHA; the fetch failed, and since every
+  other job needs `changesCheck`, the whole workflow was skipped. It now falls
+  back to the files of the pushed commit.
+* `macosCheck` runs `make tests`, which runs `configure --with-mpi` itself, and
+  `configure` does not search the Homebrew prefix — the same `MPI header not
+  found` seen when building by hand. `MPI_INC` is now exported in the install
+  step. This only started failing when `macos-latest` moved to Apple silicon:
+  on the old Intel runners the prefix was `/usr/local`, which is searched by
+  default.
+* The `ubuntu-20.04` runner image has been retired, so jobs asking for it queue
+  forever instead of failing. The `linuxCheck` matrix is now
+  `[ubuntu-latest, ubuntu-22.04]`, and `linuxCheck-Intel`, which pinned
+  `ubuntu-20.04` and installed oneAPI 2023.2.2, was removed — a long, fragile
+  step for a compiler this fork does not use.
+  `git checkout v8.1.0 -- .github/workflows/CI.yml` has it back.
+* `actions/checkout` moved from v3 (Node 16, retired) to v4.
 
 `.travis.yml`, `.travis/`, `.azure-pipelines.yml` and `.azure-pipelines/` were
 deleted. They were not connected to this fork, and between them they named 23
