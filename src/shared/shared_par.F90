@@ -171,6 +171,28 @@ module shared_input_parameters
   ! acoustic forcing of an acoustic medium at a rigid interface
   logical :: ACOUSTIC_FORCING
 
+  !#-----------------------------------------------------------------------------
+  !#
+  !# coupling with an external solver (github.com/kura-okubo/specfem2d)
+  !#
+  !#-----------------------------------------------------------------------------
+
+  ! injection of an externally computed acceleration on a closed band of elements
+  logical :: COUPLING_IN
+  character(len=MAX_STRING_LEN) :: COUPLING_SHAPE
+
+  ! coupling elements: circle (extori_x, extori_z, R_ext, dR_ext) ...
+  double precision :: extori_x
+  double precision :: extori_z
+  double precision :: R_ext
+  double precision :: dR_ext
+  ! ... or rectangle (rec_xmin, rec_zmin, rec_xmax, rec_zmax, rec_dx)
+  double precision :: rec_xmin
+  double precision :: rec_zmin
+  double precision :: rec_xmax
+  double precision :: rec_zmax
+  double precision :: rec_dx
+
   ! noise simulations - source time function type
   integer :: noise_source_time_function_type
 
@@ -427,6 +449,16 @@ module shared_parameters
 
   ! seismogram output
   logical, parameter :: WRITE_SEISMOGRAMS_BY_MAIN = .true.
+
+  !#-----------------------------------------------------------------------------
+  !#
+  !# external sources
+  !# added in github fork in github.com/kura-okubo/specfem2d
+  !#-----------------------------------------------------------------------------
+
+  integer, dimension(:), allocatable :: iele
+  double precision, dimension(:,:,:), allocatable :: extsource
+  integer :: number_of_extsource
 
 end module shared_parameters
 

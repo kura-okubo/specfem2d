@@ -323,6 +323,9 @@
   ! 'ACOUSTIC_FORCING'
   write(IOUT) ACOUSTIC_FORCING
 
+  ! 'COUPLING_IN'  (github.com/kura-okubo/specfem2d)
+  write(IOUT) COUPLING_IN
+
   ! 'NUMBER_OF_SIMULTANEOUS_RUNS'
   write(IOUT) NUMBER_OF_SIMULTANEOUS_RUNS
 

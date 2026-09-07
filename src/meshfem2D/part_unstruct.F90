@@ -145,7 +145,9 @@
   !--------------------------------------------------
   subroutine construct_glob2loc_elmnts(nparts)
 
-  use part_unstruct_par, only: glob2loc_elmnts,nelmnts,part
+  use constants, only: IOUT, MAX_STRING_LEN, OUTPUT_FILES
+  use part_unstruct_par, only: glob2loc_elmnts,nelmnts,part,iproc
+  use shared_parameters, only: COUPLING_IN
 
   implicit none
   integer, intent(in)  :: nparts
@@ -153,6 +155,8 @@
   integer :: num_glob, num_part
   integer, dimension(0:nparts-1)  :: num_loc
   integer :: ier
+  ! for the glob2loc element table used by the external-source coupling
+  character(len=MAX_STRING_LEN) :: prname
 
   allocate(glob2loc_elmnts(0:nelmnts-1),stat=ier)
   if (ier /= 0) stop 'Error allocating array glob2loc_elmnts'
@@ -163,12 +167,36 @@
     num_loc(num_part) = 0
   enddo
 
+  ! external-source coupling (github.com/kura-okubo/specfem2d): the solver needs
+  ! to map a global element id, which is what externalsource.txt carries, onto
+  ! the (rank, local id) it ends up on. That mapping only exists here, so dump it.
+  if (COUPLING_IN) then
+    do num_part = 0, nparts-1
+      write(prname,"(a,i5.5,a)") './'//trim(OUTPUT_FILES)//'glob2loc_table',num_part,'.bin'
+      open(unit=IOUT+num_part,file=trim(prname),status='unknown',action='write', &
+           form='unformatted',iostat=ier)
+      if (ier /= 0) call stop_the_code('Error opening glob2loc_table file; '// &
+                                       'check that directory OUTPUT_FILES exists')
+    enddo
+  endif
+
   ! local numbering
   do num_glob = 0, nelmnts-1
     num_part = part(num_glob)
     glob2loc_elmnts(num_glob) = num_loc(num_part)
     num_loc(num_part) = num_loc(num_part) + 1
+
+    ! global element id, rank, local element id (all 1-based, as the solver reads them)
+    if (COUPLING_IN .and. iproc == 0) then
+      write(IOUT+num_part) num_glob+1, num_part, glob2loc_elmnts(num_glob)+1
+    endif
   enddo
+
+  if (COUPLING_IN) then
+    do num_part = 0, nparts-1
+      close(IOUT+num_part)
+    enddo
+  endif
 
   end subroutine construct_glob2loc_elmnts
 
@@ -243,6 +271,7 @@
   enddo
 
   end subroutine construct_glob2loc_nodes
+
 
 !
 !---------------------------------------------------------------------------------------

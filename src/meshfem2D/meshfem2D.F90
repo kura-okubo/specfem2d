@@ -256,6 +256,15 @@
       call determine_abs_surface()
     endif
 
+    ! determines elements for external source coupling
+    ! (github.com/kura-okubo/specfem2d): reads the internal mesher grid, so it
+    ! only makes sense with read_external_mesh = .false.
+    if (COUPLING_IN) then
+      if (read_external_mesh) &
+        call stop_the_code('COUPLING_IN requires the internal mesher (read_external_mesh = .false.)')
+      call determine_external_source_elements()
+    endif
+
     ! axi-symmetric mesh
     if (AXISYM) then
       ! user output
@@ -422,5 +431,3 @@
   call finalize_mpi()
 
   end program meshfem2D
-
-

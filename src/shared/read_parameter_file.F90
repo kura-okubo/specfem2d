@@ -169,6 +169,8 @@
     call bcast_all_singlel(add_Bielak_conditions_top)
     call bcast_all_singlel(add_Bielak_conditions_left)
     call bcast_all_singlel(ACOUSTIC_FORCING)
+    call bcast_all_singlel(COUPLING_IN)
+    call bcast_all_string(COUPLING_SHAPE)
     call bcast_all_singlei(noise_source_time_function_type)
     call bcast_all_singlel(write_moving_sources_database)
 
@@ -668,6 +670,105 @@
     some_parameters_missing_from_Par_file = .true.
     write(*,'(a)') 'write_moving_sources_database = .false.'
     write(*,*)
+  endif
+
+  !--------------------------------------------------------------------
+  !
+  ! coupling with an external solver
+  ! (github.com/kura-okubo/specfem2d)
+  !
+  !--------------------------------------------------------------------
+
+  ! Injection of an externally computed acceleration on a closed band of
+  ! elements. Unlike every other parameter in this file these are OPTIONAL:
+  ! a Par_file without them is a Par_file that does not use the coupling, and
+  ! every stock example is such a Par_file. read_value_*_p leaves the variable
+  ! untouched when the keyword is absent, so the defaults set here survive.
+  COUPLING_IN = .false.
+  COUPLING_SHAPE = 'not_defined'
+  extori_x = 0.d0
+  extori_z = 0.d0
+  R_ext = 0.d0
+  dR_ext = 0.d0
+  rec_xmin = 0.d0
+  rec_zmin = 0.d0
+  rec_xmax = 0.d0
+  rec_zmax = 0.d0
+  rec_dx = 0.d0
+
+  call read_value_logical_p(COUPLING_IN, 'COUPLING_IN')
+
+  ! the rest only has to be there once the coupling is switched on
+  if (COUPLING_IN) then
+    call read_value_string_p(COUPLING_SHAPE, 'COUPLING_SHAPE')
+    if (err_occurred() /= 0) then
+      some_parameters_missing_from_Par_file = .true.
+      write(*,'(a)') 'COUPLING_SHAPE                  = rectangle   # or circle'
+      write(*,*)
+    endif
+
+    call read_value_double_precision_p(extori_x, 'extori_x')
+    if (err_occurred() /= 0) then
+      some_parameters_missing_from_Par_file = .true.
+      write(*,'(a)') 'extori_x                        = 0.d0'
+      write(*,*)
+    endif
+
+    call read_value_double_precision_p(extori_z, 'extori_z')
+    if (err_occurred() /= 0) then
+      some_parameters_missing_from_Par_file = .true.
+      write(*,'(a)') 'extori_z                        = 0.d0'
+      write(*,*)
+    endif
+
+    call read_value_double_precision_p(R_ext, 'R_ext')
+    if (err_occurred() /= 0) then
+      some_parameters_missing_from_Par_file = .true.
+      write(*,'(a)') 'R_ext                           = 0.d0'
+      write(*,*)
+    endif
+
+    call read_value_double_precision_p(dR_ext, 'dR_ext')
+    if (err_occurred() /= 0) then
+      some_parameters_missing_from_Par_file = .true.
+      write(*,'(a)') 'dR_ext                          = 0.d0'
+      write(*,*)
+    endif
+
+    call read_value_double_precision_p(rec_xmin, 'rec_xmin')
+    if (err_occurred() /= 0) then
+      some_parameters_missing_from_Par_file = .true.
+      write(*,'(a)') 'rec_xmin                        = 0.d0'
+      write(*,*)
+    endif
+
+    call read_value_double_precision_p(rec_zmin, 'rec_zmin')
+    if (err_occurred() /= 0) then
+      some_parameters_missing_from_Par_file = .true.
+      write(*,'(a)') 'rec_zmin                        = 0.d0'
+      write(*,*)
+    endif
+
+    call read_value_double_precision_p(rec_xmax, 'rec_xmax')
+    if (err_occurred() /= 0) then
+      some_parameters_missing_from_Par_file = .true.
+      write(*,'(a)') 'rec_xmax                        = 0.d0'
+      write(*,*)
+    endif
+
+    call read_value_double_precision_p(rec_zmax, 'rec_zmax')
+    if (err_occurred() /= 0) then
+      some_parameters_missing_from_Par_file = .true.
+      write(*,'(a)') 'rec_zmax                        = 0.d0'
+      write(*,*)
+    endif
+
+    call read_value_double_precision_p(rec_dx, 'rec_dx')
+    if (err_occurred() /= 0) then
+      some_parameters_missing_from_Par_file = .true.
+      write(*,'(a)') 'rec_dx                          = 0.d0'
+      write(*,*)
+    endif
   endif
 
   !--------------------------------------------------------------------

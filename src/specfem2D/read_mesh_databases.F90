@@ -296,6 +296,15 @@
      do_rerun_mesher = .true.
    endif
 
+  ! read the COUPLING_IN flag (github.com/kura-okubo/specfem2d).
+  ! The coupling elements are picked by the mesher, so a database made with
+  ! COUPLING_IN = .false. carries no glob2loc table and the solver cannot inject.
+  read(IIN) local_l ! COUPLING_IN
+  if (local_l .neqv. COUPLING_IN) then
+     print *,'Warning: rank ',myrank,' read mesh: COUPLING_IN setting changed'
+     do_rerun_mesher = .true.
+   endif
+
   ! 'NUMBER_OF_SIMULTANEOUS_RUNS'
   read(IIN) local_i ! NUMBER_OF_SIMULTANEOUS_RUNS
 
@@ -1125,7 +1134,7 @@
 
   use constants, only: IIN,IRIGHT,ILEFT,IBOTTOM,ITOP,IEDGE1,IEDGE2,IEDGE3,IEDGE4,IMAIN
 
-  use specfem_par, only: myrank,nelem_acforcing,nspec,ACOUSTIC_FORCING, &
+  use specfem_par, only: myrank,nelem_acforcing,nspec,ACOUSTIC_FORCING,&
                          ibegin_edge1_acforcing,iend_edge1_acforcing,ibegin_edge2_acforcing,iend_edge2_acforcing, &
                          ibegin_edge3_acforcing,iend_edge3_acforcing,ibegin_edge4_acforcing,iend_edge4_acforcing, &
                          numacforcing,codeacforcing,typeacforcing, &

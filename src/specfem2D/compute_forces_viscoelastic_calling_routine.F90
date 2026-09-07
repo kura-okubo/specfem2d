@@ -36,6 +36,7 @@
   use constants, only: USE_ENFORCE_FIELDS
   use specfem_par
   use specfem_par_noise
+  use shared_parameters, only: COUPLING_IN
 
   implicit none
 
@@ -180,6 +181,9 @@
   else
     accel_elastic(:,:) = accel_elastic(:,:) * rmass_inverse_elastic(:,:)
   endif
+
+  ! coupling acceleration injection
+  if (COUPLING_IN) call add_ext_source(accel_elastic)
 
   ! time stepping
   select case (time_stepping_scheme)

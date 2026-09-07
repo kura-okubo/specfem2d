@@ -1,5 +1,12 @@
 # SPECFEM2D
 
+### This fork is extended from the original source (https://github.com/geodynamics/specfem2d.git) to couple specfem2D with another numerical framework to model dynamic earthquake rupture. An acceleration time series can be given explicitly as the source of a specfem2D simulation.
+
+**See <http://htmlpreview.github.io/?https://github.com/kura-okubo/specfem2d/blob/master/EXAMPLES/Validation/note/Note_of_Specfem2DCoupling.html>**
+
+Ported from v7.0.0 to upstream **v8.1.0**; see [PORTING_v7_to_v8.md](PORTING_v7_to_v8.md)
+for what changed and how it was validated.
+
 [![DOI](https://zenodo.org/badge/14293189.svg)](https://zenodo.org/badge/latestdoi/14293189)<br>
 
 SPECFEM2D allows users to perform 2D and 2.5D (i.e., axisymmetric) simulations
@@ -9,6 +16,8 @@ The package can also be used for full waveform imaging (FWI) or adjoint tomograp
 
 SPECFEM2D was founded by Dimitri Komatitsch and Jeroen Tromp, and is now being developed by a large, collaborative, and inclusive community. A complete list of authors can be found at
 https://specfem2d.readthedocs.io/en/latest/authors/
+
+> 2026.09.07: Updated the version originally developed in 2019 based on v7.0.0 to incorporate updates from v8.1.0.
 
 
 ## Installation
@@ -36,16 +45,12 @@ and check the output files in `./OUTPUT_FILES/`
 
 ## Development
 
-[![Actions Status](https://github.com/SPECFEM/specfem2d/workflows/CI/badge.svg)](https://github.com/SPECFEM/specfem2d/actions)
-[![Travis Status](https://app.travis-ci.com/SPECFEM/specfem2d.svg?branch=devel)](https://app.travis-ci.com/SPECFEM/specfem2d)
-[![Azure Status](https://dev.azure.com/danielpeter22/SPECFEM2D/_apis/build/status/geodynamics.specfem2d?branchName=devel)](https://dev.azure.com/danielpeter22/SPECFEM2D/_build/latest?definitionId=6&branchName=devel)
+[![Actions Status](https://github.com/kura-okubo/specfem2d/actions/workflows/CI.yml/badge.svg)](https://github.com/kura-okubo/specfem2d/actions)
 [![codecov](https://codecov.io/gh/SPECFEM/specfem2d/branch/devel/graph/badge.svg)](https://codecov.io/gh/SPECFEM/specfem2d)
 [![Documentation Status](https://readthedocs.org/projects/specfem2d/badge/?version=latest)](https://specfem2d.readthedocs.io/en/latest/?badge=latest)
 [![License: GPL v3](https://img.shields.io/badge/License-GPL%20v3-blue.svg)](LICENSE)
 
-* Actions tests: [github actions specfem2d](https://github.com/SPECFEM/specfem2d/actions)
-
-* Travis tests: [travis-ci specfem2d](https://travis-ci.com/SPECFEM/specfem2d/builds)
+* Actions tests: [github actions kura-okubo/specfem2d](https://github.com/kura-okubo/specfem2d/actions)
 
 
 Development is hosted on GitHub in the

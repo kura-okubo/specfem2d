@@ -36,6 +36,7 @@
 ! creates a Gnuplot file that displays the grid
 
   use constants, only: IMAIN,IOUT_VIS,OUTPUT_FILES,myrank
+  use shared_parameters, only: COUPLING_IN
 
   implicit none
 
@@ -101,14 +102,19 @@
   if (ier /= 0 ) call stop_the_code('Error saving plotgnu file')
 
   write(IOUT_VIS,*) '#set term wxt'
-  write(IOUT_VIS,*) 'set term postscript landscape monochrome solid "Helvetica" 22'
+  ! colour, not monochrome: determine_external_source_elements.f90 draws the
+  ! coupling elements in red on top of the mesh
+  write(IOUT_VIS,*) 'set term postscript landscape color solid "Helvetica" 22'
   write(IOUT_VIS,*) 'set output "',trim(OUTPUT_FILES)//'gridfile.ps"'
   write(IOUT_VIS,*) '#set xrange [',sngl(minval(x)),':',sngl(maxval(x)),']'
   write(IOUT_VIS,*) '#set yrange [',sngl(minval(z)),':',sngl(maxval(z)),']'
   ! use same unit length on both X and Y axes
   write(IOUT_VIS,*) 'set size ratio -1'
   write(IOUT_VIS,*) 'set loadpath "'//trim(OUTPUT_FILES)//'"'
-  write(IOUT_VIS,*) 'plot "gridfile.gnu" title "Macrobloc mesh" w l'
+  ! external-source coupling: overlay the elements picked as coupling elements,
+  ! so the closure of the band can be checked by eye before the solver is run
+  if (COUPLING_IN) write(IOUT_VIS,*) 'load "gridfile_externalsource.gnu"'
+  write(IOUT_VIS,*) 'plot "gridfile.gnu" title "Macrobloc mesh" w l lc "black"'
   write(IOUT_VIS,*) 'pause -1 "Hit any key..."'
   close(IOUT_VIS)
 

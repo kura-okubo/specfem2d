@@ -725,6 +725,18 @@ module specfem_par
   double precision, dimension(:,:,:), allocatable :: sisux,sisuz,siscurl
   integer :: nlength_seismogram
 
+  !---------------------------------------------------------------------
+  ! for coupling with acceleration injection
+  ! (github.com/kura-okubo/specfem2d)
+  !---------------------------------------------------------------------
+  ! global element id -> (rank, local element id), read from glob2loc_tableNNNNN.bin
+  integer, dimension(:,:), allocatable :: glob2loc_table
+  ! iglob points sitting on an MPI interface, used to average the injection there
+  integer, dimension(:,:), allocatable :: iglob_interface_table
+  double precision, dimension(:,:), allocatable :: coord_interface
+  integer :: num_iglob_interface
+  integer :: num_extsource_timestep
+
 end module specfem_par
 
 !=====================================================================

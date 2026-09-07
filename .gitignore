@@ -65,3 +65,31 @@ obj/*
 .*swp
 .*swo
 *~
+
+# run products of EXAMPLES/Validation (v8.1.0 port): regenerate with the
+# six steps in EXAMPLES/Validation/note/, they are far too big to track
+EXAMPLES/Validation/*/extsource/
+EXAMPLES/Validation/*/OUTPUT_FILES_grid/
+EXAMPLES/Validation/*/OUTPUT_FILES_P/
+EXAMPLES/Validation/*/OUTPUT_FILES_C/
+EXAMPLES/Validation/*/*.log
+
+EXAMPLES/Paper_VenezuelaEQ2026
+
+# out-of-source builds that `make tests` creates inside tests/
+tests/*/bin/
+tests/*/obj/
+tests/*/setup/
+tests/*/DATA/
+tests/*/OUTPUT_FILES*/
+tests/*/extsource/
+tests/*/Makefile
+tests/*/results.log
+tests/*/config.log
+tests/*/config.status
+setup/config.fh
+setup/constants_tomography.h
+setup/version.fh
+
+# macOS Finder
+.DS_Store

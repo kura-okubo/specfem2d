@@ -137,6 +137,9 @@
   ! init specific to NO_BACKWARD_RECONSTRUCTION option
   call prepare_timerun_no_backward_reconstruction()
 
+  !read in parameters for external source
+  if (COUPLING_IN) call read_ext_source_num()
+
   ! prepares GPU arrays
   if (GPU_MODE) call prepare_GPU()
 

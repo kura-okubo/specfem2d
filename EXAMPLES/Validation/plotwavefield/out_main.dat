@@ -1,0 +1,328 @@
+wavefield0000600_01.bin
+wavefield0000200_01.bin
+wavefield0000400_01.bin
+wavefield0000005_01.bin
+Computation time:   1.0038,   5.2526,   2.6133
+Computation time:   0.9804,   5.2639,   2.6283
+Computation time:   0.9915,   5.2242,   2.6499
+Computation time:   0.9890,   5.2186,   2.6592
+Total_time:15.149931192398071[sec] by process 0 of 4 on dhcp-140-247-105-165.fas.harvard.edu.
+plotwavefield_v01.py:23: NumbaWarning: [1m
+Compilation is falling back to object mode WITH looplifting enabled because Function "plot_wavefield" failed type inference due to: [1mUntyped global name 'open':[0m [1m[1mcannot determine Numba type of <class 'builtin_function_or_method'>[0m
+[1m
+File "plotwavefield_v01.py", line 31:[0m
+[1mdef plot_wavefield(fname):
+    <source elided>
+	# read vectors
+[1m	fi = open(Inputdir+"/"+fname, 'rb')
+[0m [1m^[0m[0m
+[0m[0m
+  @jit
+plotwavefield_v01.py:23: NumbaWarning: [1m
+Compilation is falling back to object mode WITHOUT looplifting enabled because Function "plot_wavefield" failed type inference due to: [1mUntyped global name 'open':[0m [1m[1mcannot determine Numba type of <class 'builtin_function_or_method'>[0m
+[1m
+File "plotwavefield_v01.py", line 31:[0m
+[1mdef plot_wavefield(fname):
+    <source elided>
+	# read vectors
+[1m	fi = open(Inputdir+"/"+fname, 'rb')
+[0m [1m^[0m[0m
+[0m[0m
+  @jit
+/Users/kurama/.pyenv/versions/anaconda3-5.2.0/envs/obspy/lib/python3.6/site-packages/numba/compiler.py:742: NumbaWarning: [1mFunction "plot_wavefield" was compiled in object mode without forceobj=True, but has lifted loops.
+[1m
+File "plotwavefield_v01.py", line 24:[0m
+[1m@jit
+[1mdef plot_wavefield(fname):
+[0m[1m^[0m[0m
+[0m
+  self.func_ir.loc))
+/Users/kurama/.pyenv/versions/anaconda3-5.2.0/envs/obspy/lib/python3.6/site-packages/numba/compiler.py:751: NumbaDeprecationWarning: [1m
+Fall-back from the nopython compilation path to the object mode compilation path has been detected, this is deprecated behaviour.
+
+For more information visit http://numba.pydata.org/numba-doc/latest/reference/deprecation.html#deprecation-of-object-mode-fall-back-behaviour-when-using-jit
+[1m
+File "plotwavefield_v01.py", line 24:[0m
+[1m@jit
+[1mdef plot_wavefield(fname):
+[0m[1m^[0m[0m
+[0m
+  warnings.warn(errors.NumbaDeprecationWarning(msg, self.func_ir.loc))
+plotwavefield_v01.py:23: NumbaWarning: [1m
+Compilation is falling back to object mode WITHOUT looplifting enabled because Function "plot_wavefield" failed type inference due to: [1m[1mnon-precise type pyobject[0m
+[0m[1m[1] During: typing of argument at plotwavefield_v01.py (80)[0m
+[1m
+File "plotwavefield_v01.py", line 80:[0m
+[1mdef plot_wavefield(fname):
+    <source elided>
+	vq	= []
+[1m	zcount = 0
+[0m [1m^[0m[0m
+[0m
+  @jit
+/Users/kurama/.pyenv/versions/anaconda3-5.2.0/envs/obspy/lib/python3.6/site-packages/numba/compiler.py:742: NumbaWarning: [1mFunction "plot_wavefield" was compiled in object mode without forceobj=True.
+[1m
+File "plotwavefield_v01.py", line 80:[0m
+[1mdef plot_wavefield(fname):
+    <source elided>
+	vq	= []
+[1m	zcount = 0
+[0m [1m^[0m[0m
+[0m
+  self.func_ir.loc))
+/Users/kurama/.pyenv/versions/anaconda3-5.2.0/envs/obspy/lib/python3.6/site-packages/numba/compiler.py:751: NumbaDeprecationWarning: [1m
+Fall-back from the nopython compilation path to the object mode compilation path has been detected, this is deprecated behaviour.
+
+For more information visit http://numba.pydata.org/numba-doc/latest/reference/deprecation.html#deprecation-of-object-mode-fall-back-behaviour-when-using-jit
+[1m
+File "plotwavefield_v01.py", line 80:[0m
+[1mdef plot_wavefield(fname):
+    <source elided>
+	vq	= []
+[1m	zcount = 0
+[0m [1m^[0m[0m
+[0m
+  warnings.warn(errors.NumbaDeprecationWarning(msg, self.func_ir.loc))
+plotwavefield_v01.py:228: MatplotlibDeprecationWarning: 
+The frameon kwarg was deprecated in Matplotlib 3.1 and will be removed in 3.3. Use facecolor instead.
+  plot_wavefield(fname)
+plotwavefield_v01.py:23: NumbaWarning: [1m
+Compilation is falling back to object mode WITH looplifting enabled because Function "plot_wavefield" failed type inference due to: [1mUntyped global name 'open':[0m [1m[1mcannot determine Numba type of <class 'builtin_function_or_method'>[0m
+[1m
+File "plotwavefield_v01.py", line 31:[0m
+[1mdef plot_wavefield(fname):
+    <source elided>
+	# read vectors
+[1m	fi = open(Inputdir+"/"+fname, 'rb')
+[0m [1m^[0m[0m
+[0m[0m
+  @jit
+plotwavefield_v01.py:23: NumbaWarning: [1m
+Compilation is falling back to object mode WITHOUT looplifting enabled because Function "plot_wavefield" failed type inference due to: [1mUntyped global name 'open':[0m [1m[1mcannot determine Numba type of <class 'builtin_function_or_method'>[0m
+[1m
+File "plotwavefield_v01.py", line 31:[0m
+[1mdef plot_wavefield(fname):
+    <source elided>
+	# read vectors
+[1m	fi = open(Inputdir+"/"+fname, 'rb')
+[0m [1m^[0m[0m
+[0m[0m
+  @jit
+/Users/kurama/.pyenv/versions/anaconda3-5.2.0/envs/obspy/lib/python3.6/site-packages/numba/compiler.py:742: NumbaWarning: [1mFunction "plot_wavefield" was compiled in object mode without forceobj=True, but has lifted loops.
+[1m
+File "plotwavefield_v01.py", line 24:[0m
+[1m@jit
+[1mdef plot_wavefield(fname):
+[0m[1m^[0m[0m
+[0m
+  self.func_ir.loc))
+/Users/kurama/.pyenv/versions/anaconda3-5.2.0/envs/obspy/lib/python3.6/site-packages/numba/compiler.py:751: NumbaDeprecationWarning: [1m
+Fall-back from the nopython compilation path to the object mode compilation path has been detected, this is deprecated behaviour.
+
+For more information visit http://numba.pydata.org/numba-doc/latest/reference/deprecation.html#deprecation-of-object-mode-fall-back-behaviour-when-using-jit
+[1m
+File "plotwavefield_v01.py", line 24:[0m
+[1m@jit
+[1mdef plot_wavefield(fname):
+[0m[1m^[0m[0m
+[0m
+  warnings.warn(errors.NumbaDeprecationWarning(msg, self.func_ir.loc))
+plotwavefield_v01.py:23: NumbaWarning: [1m
+Compilation is falling back to object mode WITHOUT looplifting enabled because Function "plot_wavefield" failed type inference due to: [1m[1mnon-precise type pyobject[0m
+[0m[1m[1] During: typing of argument at plotwavefield_v01.py (80)[0m
+[1m
+File "plotwavefield_v01.py", line 80:[0m
+[1mdef plot_wavefield(fname):
+    <source elided>
+	vq	= []
+[1m	zcount = 0
+[0m [1m^[0m[0m
+[0m
+  @jit
+/Users/kurama/.pyenv/versions/anaconda3-5.2.0/envs/obspy/lib/python3.6/site-packages/numba/compiler.py:742: NumbaWarning: [1mFunction "plot_wavefield" was compiled in object mode without forceobj=True.
+[1m
+File "plotwavefield_v01.py", line 80:[0m
+[1mdef plot_wavefield(fname):
+    <source elided>
+	vq	= []
+[1m	zcount = 0
+[0m [1m^[0m[0m
+[0m
+  self.func_ir.loc))
+/Users/kurama/.pyenv/versions/anaconda3-5.2.0/envs/obspy/lib/python3.6/site-packages/numba/compiler.py:751: NumbaDeprecationWarning: [1m
+Fall-back from the nopython compilation path to the object mode compilation path has been detected, this is deprecated behaviour.
+
+For more information visit http://numba.pydata.org/numba-doc/latest/reference/deprecation.html#deprecation-of-object-mode-fall-back-behaviour-when-using-jit
+[1m
+File "plotwavefield_v01.py", line 80:[0m
+[1mdef plot_wavefield(fname):
+    <source elided>
+	vq	= []
+[1m	zcount = 0
+[0m [1m^[0m[0m
+[0m
+  warnings.warn(errors.NumbaDeprecationWarning(msg, self.func_ir.loc))
+plotwavefield_v01.py:228: MatplotlibDeprecationWarning: 
+The frameon kwarg was deprecated in Matplotlib 3.1 and will be removed in 3.3. Use facecolor instead.
+  plot_wavefield(fname)
+plotwavefield_v01.py:23: NumbaWarning: [1m
+Compilation is falling back to object mode WITH looplifting enabled because Function "plot_wavefield" failed type inference due to: [1mUntyped global name 'open':[0m [1m[1mcannot determine Numba type of <class 'builtin_function_or_method'>[0m
+[1m
+File "plotwavefield_v01.py", line 31:[0m
+[1mdef plot_wavefield(fname):
+    <source elided>
+	# read vectors
+[1m	fi = open(Inputdir+"/"+fname, 'rb')
+[0m [1m^[0m[0m
+[0m[0m
+  @jit
+plotwavefield_v01.py:23: NumbaWarning: [1m
+Compilation is falling back to object mode WITHOUT looplifting enabled because Function "plot_wavefield" failed type inference due to: [1mUntyped global name 'open':[0m [1m[1mcannot determine Numba type of <class 'builtin_function_or_method'>[0m
+[1m
+File "plotwavefield_v01.py", line 31:[0m
+[1mdef plot_wavefield(fname):
+    <source elided>
+	# read vectors
+[1m	fi = open(Inputdir+"/"+fname, 'rb')
+[0m [1m^[0m[0m
+[0m[0m
+  @jit
+/Users/kurama/.pyenv/versions/anaconda3-5.2.0/envs/obspy/lib/python3.6/site-packages/numba/compiler.py:742: NumbaWarning: [1mFunction "plot_wavefield" was compiled in object mode without forceobj=True, but has lifted loops.
+[1m
+File "plotwavefield_v01.py", line 24:[0m
+[1m@jit
+[1mdef plot_wavefield(fname):
+[0m[1m^[0m[0m
+[0m
+  self.func_ir.loc))
+/Users/kurama/.pyenv/versions/anaconda3-5.2.0/envs/obspy/lib/python3.6/site-packages/numba/compiler.py:751: NumbaDeprecationWarning: [1m
+Fall-back from the nopython compilation path to the object mode compilation path has been detected, this is deprecated behaviour.
+
+For more information visit http://numba.pydata.org/numba-doc/latest/reference/deprecation.html#deprecation-of-object-mode-fall-back-behaviour-when-using-jit
+[1m
+File "plotwavefield_v01.py", line 24:[0m
+[1m@jit
+[1mdef plot_wavefield(fname):
+[0m[1m^[0m[0m
+[0m
+  warnings.warn(errors.NumbaDeprecationWarning(msg, self.func_ir.loc))
+plotwavefield_v01.py:23: NumbaWarning: [1m
+Compilation is falling back to object mode WITHOUT looplifting enabled because Function "plot_wavefield" failed type inference due to: [1m[1mnon-precise type pyobject[0m
+[0m[1m[1] During: typing of argument at plotwavefield_v01.py (80)[0m
+[1m
+File "plotwavefield_v01.py", line 80:[0m
+[1mdef plot_wavefield(fname):
+    <source elided>
+	vq	= []
+[1m	zcount = 0
+[0m [1m^[0m[0m
+[0m
+  @jit
+/Users/kurama/.pyenv/versions/anaconda3-5.2.0/envs/obspy/lib/python3.6/site-packages/numba/compiler.py:742: NumbaWarning: [1mFunction "plot_wavefield" was compiled in object mode without forceobj=True.
+[1m
+File "plotwavefield_v01.py", line 80:[0m
+[1mdef plot_wavefield(fname):
+    <source elided>
+	vq	= []
+[1m	zcount = 0
+[0m [1m^[0m[0m
+[0m
+  self.func_ir.loc))
+/Users/kurama/.pyenv/versions/anaconda3-5.2.0/envs/obspy/lib/python3.6/site-packages/numba/compiler.py:751: NumbaDeprecationWarning: [1m
+Fall-back from the nopython compilation path to the object mode compilation path has been detected, this is deprecated behaviour.
+
+For more information visit http://numba.pydata.org/numba-doc/latest/reference/deprecation.html#deprecation-of-object-mode-fall-back-behaviour-when-using-jit
+[1m
+File "plotwavefield_v01.py", line 80:[0m
+[1mdef plot_wavefield(fname):
+    <source elided>
+	vq	= []
+[1m	zcount = 0
+[0m [1m^[0m[0m
+[0m
+  warnings.warn(errors.NumbaDeprecationWarning(msg, self.func_ir.loc))
+plotwavefield_v01.py:228: MatplotlibDeprecationWarning: 
+The frameon kwarg was deprecated in Matplotlib 3.1 and will be removed in 3.3. Use facecolor instead.
+  plot_wavefield(fname)
+
+All process has been successfully done.
+plotwavefield_v01.py:23: NumbaWarning: [1m
+Compilation is falling back to object mode WITH looplifting enabled because Function "plot_wavefield" failed type inference due to: [1mUntyped global name 'open':[0m [1m[1mcannot determine Numba type of <class 'builtin_function_or_method'>[0m
+[1m
+File "plotwavefield_v01.py", line 31:[0m
+[1mdef plot_wavefield(fname):
+    <source elided>
+	# read vectors
+[1m	fi = open(Inputdir+"/"+fname, 'rb')
+[0m [1m^[0m[0m
+[0m[0m
+  @jit
+plotwavefield_v01.py:23: NumbaWarning: [1m
+Compilation is falling back to object mode WITHOUT looplifting enabled because Function "plot_wavefield" failed type inference due to: [1mUntyped global name 'open':[0m [1m[1mcannot determine Numba type of <class 'builtin_function_or_method'>[0m
+[1m
+File "plotwavefield_v01.py", line 31:[0m
+[1mdef plot_wavefield(fname):
+    <source elided>
+	# read vectors
+[1m	fi = open(Inputdir+"/"+fname, 'rb')
+[0m [1m^[0m[0m
+[0m[0m
+  @jit
+/Users/kurama/.pyenv/versions/anaconda3-5.2.0/envs/obspy/lib/python3.6/site-packages/numba/compiler.py:742: NumbaWarning: [1mFunction "plot_wavefield" was compiled in object mode without forceobj=True, but has lifted loops.
+[1m
+File "plotwavefield_v01.py", line 24:[0m
+[1m@jit
+[1mdef plot_wavefield(fname):
+[0m[1m^[0m[0m
+[0m
+  self.func_ir.loc))
+/Users/kurama/.pyenv/versions/anaconda3-5.2.0/envs/obspy/lib/python3.6/site-packages/numba/compiler.py:751: NumbaDeprecationWarning: [1m
+Fall-back from the nopython compilation path to the object mode compilation path has been detected, this is deprecated behaviour.
+
+For more information visit http://numba.pydata.org/numba-doc/latest/reference/deprecation.html#deprecation-of-object-mode-fall-back-behaviour-when-using-jit
+[1m
+File "plotwavefield_v01.py", line 24:[0m
+[1m@jit
+[1mdef plot_wavefield(fname):
+[0m[1m^[0m[0m
+[0m
+  warnings.warn(errors.NumbaDeprecationWarning(msg, self.func_ir.loc))
+plotwavefield_v01.py:23: NumbaWarning: [1m
+Compilation is falling back to object mode WITHOUT looplifting enabled because Function "plot_wavefield" failed type inference due to: [1m[1mnon-precise type pyobject[0m
+[0m[1m[1] During: typing of argument at plotwavefield_v01.py (80)[0m
+[1m
+File "plotwavefield_v01.py", line 80:[0m
+[1mdef plot_wavefield(fname):
+    <source elided>
+	vq	= []
+[1m	zcount = 0
+[0m [1m^[0m[0m
+[0m
+  @jit
+/Users/kurama/.pyenv/versions/anaconda3-5.2.0/envs/obspy/lib/python3.6/site-packages/numba/compiler.py:742: NumbaWarning: [1mFunction "plot_wavefield" was compiled in object mode without forceobj=True.
+[1m
+File "plotwavefield_v01.py", line 80:[0m
+[1mdef plot_wavefield(fname):
+    <source elided>
+	vq	= []
+[1m	zcount = 0
+[0m [1m^[0m[0m
+[0m
+  self.func_ir.loc))
+/Users/kurama/.pyenv/versions/anaconda3-5.2.0/envs/obspy/lib/python3.6/site-packages/numba/compiler.py:751: NumbaDeprecationWarning: [1m
+Fall-back from the nopython compilation path to the object mode compilation path has been detected, this is deprecated behaviour.
+
+For more information visit http://numba.pydata.org/numba-doc/latest/reference/deprecation.html#deprecation-of-object-mode-fall-back-behaviour-when-using-jit
+[1m
+File "plotwavefield_v01.py", line 80:[0m
+[1mdef plot_wavefield(fname):
+    <source elided>
+	vq	= []
+[1m	zcount = 0
+[0m [1m^[0m[0m
+[0m
+  warnings.warn(errors.NumbaDeprecationWarning(msg, self.func_ir.loc))
+plotwavefield_v01.py:228: MatplotlibDeprecationWarning: 
+The frameon kwarg was deprecated in Matplotlib 3.1 and will be removed in 3.3. Use facecolor instead.
+  plot_wavefield(fname)
+[0m[0m[0m[0m
