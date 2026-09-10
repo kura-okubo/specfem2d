@@ -1,0 +1,23 @@
+#
+# Map-view domain for the Venezuela 2026 far-field model.
+# "z" here is the UTM 19N NORTHING relative to the frame origin, not depth.
+#
+# number of interfaces
+#
+ 2
+#
+# interface 1 (southern edge of the model)
+#
+ 2
+ -600000.0 -320000.0
+ 1062000.0 -320000.0
+#
+# interface 2 (northern edge of the model)
+#
+ 2
+ -600000.0 571000.0
+ 1062000.0 571000.0
+#
+# number of spectral elements in the z direction, per layer
+#
+594

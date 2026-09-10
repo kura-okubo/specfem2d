@@ -76,6 +76,16 @@ EXAMPLES/Validation/*/*.log
 
 EXAMPLES/Paper_VenezuelaEQ2026
 
+# Venezuela case (all versions): DATA/ and the run scripts are tracked so the
+# setup travels with the code; everything the run regenerates is not.
+# extsource/ is 361 MB and comes from the HOSS sensors, OUTPUT_FILES_grid/
+# is rebuilt by xmeshfem2D on every run.
+EXAMPLES/Paper_VenezuelaEQ2026_v*/extsource/
+EXAMPLES/Paper_VenezuelaEQ2026_v*/OUTPUT_FILES*/
+EXAMPLES/Paper_VenezuelaEQ2026_v*/*.log
+EXAMPLES/Paper_VenezuelaEQ2026_v*/xmeshfem2D
+EXAMPLES/Paper_VenezuelaEQ2026_v*/xspecfem2D
+
 # out-of-source builds that `make tests` creates inside tests/
 tests/*/bin/
 tests/*/obj/

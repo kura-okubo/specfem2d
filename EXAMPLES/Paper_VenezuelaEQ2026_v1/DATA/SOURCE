@@ -1,0 +1,43 @@
+#-----------------------------------------------------------
+# SOURCE for the point-source trial run (step 5).
+#
+# USGS us6000t7zp, Mw 7.5, 2026-06-24T22:05:04.053 UTC,
+# hypocenter -67.2205 E / 10.5955 N, depth
+# 10 km -- the EASTERN, larger event of the doublet
+# (the western Mw 7.2, us6000t7zc, is the frame origin).
+# In the mesh frame: x = 146084.4 m, z = 25344.4 m.
+#
+# Mxx / Mzz / Mxz are the horizontal part of the W-phase moment tensor,
+# normalized by M0; for this nearly E-W right-lateral mechanism that is
+# almost pure Mxz, as it should be in map view.
+#
+# factor = M0_2D = dtau (M0_3D/dtau)^(2/3)
+#        = 5.128e+15 N   (dtau = 3 MPa)
+# A 2D source is a line source in 3D and radiates cylindrically, so the 3D
+# scalar moment 2.120e+20 N m cannot be used directly. This is the
+# approximation quoted in SPECFEM2D's own set_source_parameters.f90.
+# Naive alternative, M0_3D / W with W = 20 km:
+# 1.060e+16 N, about 2x larger.
+#
+# NOTE the STF: a Gaussian at f0 = 0.2 Hz is a few seconds long,
+# while the real sequence released its moment over 117 s.
+# The synthetic moment RATE is therefore far higher than the real one, and
+# absolute amplitudes here are NOT comparable with the recordings. The point
+# of this run is the geometry, the travel times and the run cost.
+#-----------------------------------------------------------
+source_surf                     = .false.
+xs                              = 146084.3801
+zs                              = 25344.3907
+source_type                     = 2
+time_function_type              = 3
+name_of_source_file             = "YYYYYYYYYYYYYYYYYY"
+burst_band_width                = 0.
+f0                              = 0.2
+tshift                          = 0.0
+anglesource                     = 0.
+Mxx                             = -0.143774
+Mzz                             = 0.169953
+Mxz                             = 0.944245
+factor                          = 0.0
+vx                              = 0.0
+vz                              = 0.0
